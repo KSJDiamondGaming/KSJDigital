@@ -2,7 +2,7 @@ export default function ProjectCard({ title, type, status, text }) {
   return (
     <article className="card project-card">
       <div className="project-preview">
-        <span>Preview Coming Soon</span>
+        <span>{title}</span>
       </div>
 
       <span className="card-label">{type}</span>
