@@ -20,7 +20,7 @@ export default function Header() {
 
           <div className="brand-text">
             <strong>KSJ Digital</strong>
-            <small>Websites • Discord • Automation</small>
+            <small>Technology • Infrastructure • Development</small>
           </div>
         </a>
 
@@ -31,6 +31,7 @@ export default function Header() {
           <a href="#services">Services</a>
           <a href="#projects">Projects</a>
           <a href="#goliath">Goliath</a>
+          <a href="#infrastructure">Infrastructure</a>
           <a href="#contact">Contact</a>
         </nav>
 
