@@ -62,3 +62,63 @@
 .nav-links a:hover::after {
   width: 100%;
 }
+
+.section {
+  padding: 96px 0;
+}
+
+.section-heading {
+  margin-bottom: 30px;
+}
+
+.grid,
+.project-grid,
+.pricing-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.project-grid,
+.pricing-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .project-grid,
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .site {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
