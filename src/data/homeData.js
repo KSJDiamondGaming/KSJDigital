@@ -56,7 +56,7 @@ export const projects = [
   {
     title: 'KSJ Digital',
     type: 'Business Platform',
-    status: 'V2 Rebuild',
+    status: 'In Development',
     text: 'The main KSJ Digital brand hub for websites, Discord, automation, hosting, and support.',
   },
 ];
