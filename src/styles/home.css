@@ -170,6 +170,7 @@
   place-items: center;
   min-height: 140px;
   margin-bottom: 22px;
+  overflow: hidden;
   border: 1px solid rgba(119, 173, 255, 0.14);
   border-radius: 18px;
   background:
@@ -178,10 +179,12 @@
 }
 
 .project-preview span {
-  color: var(--silver);
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.16);
+  font-size: clamp(26px, 3vw, 38px);
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  text-align: center;
   text-transform: uppercase;
 }
 
