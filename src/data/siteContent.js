@@ -1,26 +1,26 @@
 export const fallbackServices = [
   {
-    title: 'Websites',
-    description: 'Modern websites for creators, businesses, brands, and communities.',
+    title: 'Website Design and Development',
+    description: 'Fast, responsive websites for brands, creators, communities, and growing businesses.',
   },
   {
-    title: 'Discord Servers',
-    description: 'Full Discord server setup with roles, permissions, bots, and structure.',
+    title: 'Discord Bots and Automation',
+    description: 'Custom bots, moderation systems, workflows, panels, forms, tickets, and server tools.',
   },
   {
-    title: 'Branding & Logos',
-    description: 'Logos, colour systems, stream assets, panels, banners, and social graphics.',
+    title: 'Branding and Creative Assets',
+    description: 'Logos, colour systems, graphics, banners, stream panels, and digital brand kits.',
   },
   {
-    title: 'Automation & Bots',
-    description: 'Custom Discord bots, Streamer.bot setups, dashboards, and automation tools.',
+    title: 'Dashboards and Hosted Systems',
+    description: 'Admin panels, client portals, hosted tools, and scalable systems built to grow.',
   },
 ];
 
 export const fallbackProjects = [
   {
     title: 'KSJ Goliath',
-    type: 'Discord bot & dashboard',
+    type: 'Discord bot and dashboard',
     description: 'A community management system with moderation, logging, AutoMod, and dashboard controls.',
   },
   {
