@@ -1,0 +1,21 @@
+<svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="40" height="40" rx="10" fill="url(#grad)" />
+
+  <text
+    x="52"
+    y="26"
+    font-size="16"
+    fill="#ffffff"
+    font-family="Inter, Arial, sans-serif"
+    font-weight="700"
+  >
+    KSJ Digital
+  </text>
+
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="40" y2="40">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+</svg>
