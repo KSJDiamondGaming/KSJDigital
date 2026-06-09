@@ -6,6 +6,7 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Hero from './sections/Hero';
 import Services from './sections/Services';
+import Pricing from './sections/Pricing';
 import Projects from './sections/Projects';
 import Systems from './sections/Systems';
 import Contact from './sections/Contact';
@@ -47,6 +48,7 @@ function App() {
       <Navbar />
       <Hero />
       <Services services={services} />
+      <Pricing />
       <Projects projects={projects} />
       <Systems />
       <Contact />
