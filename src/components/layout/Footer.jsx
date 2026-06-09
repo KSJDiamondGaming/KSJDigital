@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className="site-footer">
       <div>
         <strong>KSJ Digital</strong>
         <p>Websites · Branding · Discord · Automation · Hosting</p>
