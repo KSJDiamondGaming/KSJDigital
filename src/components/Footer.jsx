@@ -4,11 +4,11 @@ export default function Footer() {
       <div className="container footer-inner">
         <div>
           <strong>KSJ Digital</strong>
-          <p>Websites • Branding • Discord • Automation • Hosting</p>
+          <p>Technology • Infrastructure • Development</p>
         </div>
 
         <div className="footer-right">
-          <p>© KSJ Digital</p>
+          <p>© 2026 KSJ Digital. All Rights Reserved.</p>
           <a href="mailto:ksj@ksjdigital.co.uk">ksj@ksjdigital.co.uk</a>
         </div>
       </div>
