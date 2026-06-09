@@ -9,6 +9,7 @@ import Services from './sections/Services';
 import Pricing from './sections/Pricing';
 import Projects from './sections/Projects';
 import Systems from './sections/Systems';
+import Infrastructure from './sections/Infrastructure';
 import Contact from './sections/Contact';
 
 function App() {
@@ -19,18 +20,8 @@ function App() {
     async function loadContent() {
       try {
         const [serviceData, projectData] = await Promise.all([
-          client.fetch(`*[_type == "service"] | order(_createdAt asc) {
-            _id,
-            title,
-            description
-          }`),
-          client.fetch(`*[_type == "project"] | order(_createdAt asc) {
-            _id,
-            title,
-            type,
-            description,
-            image
-          }`),
+          client.fetch(`*[_type == "service"] | order(_createdAt asc) { _id, title, description }`),
+          client.fetch(`*[_type == "project"] | order(_createdAt asc) { _id, title, type, description, image }`),
         ]);
 
         if (serviceData?.length) setServices(serviceData);
@@ -51,6 +42,7 @@ function App() {
       <Pricing />
       <Projects projects={projects} />
       <Systems />
+      <Infrastructure />
       <Contact />
       <Footer />
     </main>
