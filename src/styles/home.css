@@ -109,6 +109,23 @@
   min-height: 230px;
 }
 
+.logo-card-image {
+  justify-content: center;
+  min-height: 190px;
+  padding: 18px;
+  border: 1px solid rgba(119, 173, 255, 0.12);
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.hero-logo {
+  display: block;
+  width: 100%;
+  max-width: 430px;
+  height: auto;
+  object-fit: contain;
+}
+
 .logo-symbol {
   display: grid;
   place-items: center;
@@ -156,6 +173,24 @@
   font-weight: 900;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.hero-services {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-services li {
+  padding: 10px 12px;
+  border: 1px solid rgba(119, 173, 255, 0.12);
+  border-radius: 12px;
+  color: var(--silver);
+  background: rgba(255, 255, 255, 0.035);
+  font-weight: 800;
 }
 
 .trust-bar {
