@@ -1,6 +1,7 @@
 import ProjectCard from '../components/ProjectCard';
 import ServiceCard from '../components/ServiceCard';
 import TrustBar from '../components/TrustBar';
+import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { goliathFeatures, projects, services, trustItems } from '../data/homeData';
 
 export default function Home() {
@@ -18,13 +19,18 @@ export default function Home() {
           </div>
 
           <div className="hero-card">
-            <div className="logo-card">
-              <div className="logo-symbol">KSJ</div>
-              <div className="logo-divider" />
-              <div className="logo-text">
-                <strong>KSJ</strong>
-                <span>DIGITAL</span>
-              </div>
+            <div className="logo-card logo-card-image">
+              <img src={KsjDigitalLogo} alt="KSJ Digital" className="hero-logo" />
+            </div>
+            <div className="mini-card">
+              <span>Core Services</span>
+              <ul className="hero-services">
+                <li>Websites</li>
+                <li>Discord Systems</li>
+                <li>Dashboards</li>
+                <li>Hosting</li>
+                <li>Automation</li>
+              </ul>
             </div>
             <div className="mini-card">
               <span>Infrastructure</span>
