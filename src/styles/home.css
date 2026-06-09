@@ -71,6 +71,13 @@
   background: var(--card-strong);
 }
 
+.mini-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 22px;
+}
+
 .mini-card span,
 .card-label {
   display: block;
@@ -233,7 +240,9 @@
   min-height: 220px;
   border: 1px solid rgba(119, 173, 255, 0.14);
   border-radius: 22px;
-  background: rgba(47, 124, 255, 0.12);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(119, 173, 255, 0.2), transparent 18rem),
+    rgba(47, 124, 255, 0.12);
 }
 
 .dashboard-preview span {
@@ -254,6 +263,39 @@
   background: var(--card-strong);
   font-weight: 800;
   text-align: center;
+}
+
+/* Infrastructure */
+
+.infrastructure-card {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.infrastructure-card p {
+  max-width: 620px;
+}
+
+.infrastructure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.infrastructure-grid span {
+  padding: 16px 14px;
+  border: 1px solid rgba(119, 173, 255, 0.14);
+  border-radius: 16px;
+  background: var(--card-strong);
+  color: var(--silver);
+  font-weight: 800;
 }
 
 /* Contact */
