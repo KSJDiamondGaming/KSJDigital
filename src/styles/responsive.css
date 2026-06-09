@@ -1,6 +1,7 @@
 @media (max-width: 1100px) {
   .hero-grid,
-  .goliath-showcase {
+  .goliath-showcase,
+  .infrastructure-card {
     grid-template-columns: 1fr;
   }
 
@@ -14,7 +15,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .feature-grid {
+  .feature-grid,
+  .infrastructure-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -51,8 +53,14 @@
   .trust-list,
   .card-grid,
   .feature-grid,
+  .infrastructure-grid,
   .hero-services {
     grid-template-columns: 1fr;
+  }
+
+  .goliath-showcase,
+  .infrastructure-card {
+    padding: 24px;
   }
 
   .footer-inner {
