@@ -111,29 +111,31 @@ p {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
 }
 
 .brand-logo-wrap {
   width: 44px;
   height: 44px;
   overflow: hidden;
-  display: grid;
-  place-items: center;
+  display: flex;
+  justify-content: flex-start;
   flex-shrink: 0;
 }
 
 .header-logo {
-  width: 74px;
-  max-width: none;
-  height: auto;
-  transform: translateX(-13px);
+  width: 150px;
+  height: 120px;
+  display: block;
+  object-fit: contain;
+  transform: translate(-50px, 5px);
 }
 
 .brand-divider {
-  width: 1px;
+  width: 2px;
   height: 34px;
-  margin: 0 6px;
+  margin-left: -85px;
+  margin-right: 14px;
   background: rgba(255, 255, 255, 0.16);
   flex-shrink: 0;
 }
