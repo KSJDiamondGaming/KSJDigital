@@ -1,63 +1,63 @@
 export const trustItems = [
-  'UK Based',
-  'VPS Hosted',
-  'GitHub Managed',
-  'HTTPS Ready',
-  'Custom Built',
-  'Support Focused',
+  'Primary Platform',
+  'Hosting & Infrastructure',
+  'Discord Automation',
+  'Client Systems',
+  'Secure Deployments',
+  'Future Ready',
 ];
 
 export const services = [
   {
     icon: '🌐',
-    title: 'Website Design & Development',
-    text: 'Clean, responsive websites built with proper structure and long-term polish.',
-  },
-  {
-    icon: '🤖',
-    title: 'Discord Bots & Automation',
-    text: 'Custom Discord systems, moderation tools, ticket flows, embeds, and automation.',
-  },
-  {
-    icon: '📊',
-    title: 'Dashboards & Portals',
-    text: 'Modern admin panels, client portals, and control centres for growing platforms.',
-  },
-  {
-    icon: '💎',
-    title: 'Branding & Digital Assets',
-    text: 'Logo direction, creator graphics, banners, icons, and web-ready visual assets.',
+    title: 'Company Websites',
+    text: 'Clean, responsive websites for brands, creators, communities, and businesses.',
   },
   {
     icon: '🖥️',
     title: 'Hosting & Infrastructure',
-    text: 'VPS-ready foundations, GitHub workflows, HTTPS setup, and deployment structure.',
+    text: 'VPS hosting, HTTPS setup, GitHub deployments, maintenance, and reliable foundations.',
   },
   {
-    icon: '🧩',
-    title: 'Creator & Community Tools',
-    text: 'Creator websites, community hubs, media sections, link pages, and future shop tools.',
+    icon: '🤖',
+    title: 'Automation Systems',
+    text: 'Custom workflows, Discord automation, dashboard tools, and platform integrations.',
+  },
+  {
+    icon: '🛠️',
+    title: 'Platform Development',
+    text: 'Scalable systems built around dashboards, client controls, communities, and long-term growth.',
+  },
+  {
+    icon: '🔒',
+    title: 'Security & Recovery',
+    text: 'Backup planning, secure access, recovery workflows, and protection-focused architecture.',
+  },
+  {
+    icon: '💎',
+    title: 'Digital Assets',
+    text: 'Brand direction, creator graphics, banners, icons, and web-ready visual content.',
   },
 ];
 
 export const projects = [
   {
     title: 'KSJ Digital',
-    type: 'Business Platform',
+    type: 'Primary Platform',
     status: 'Primary Platform',
-    text: 'The central hub for KSJ Digital services, hosting, automation, portfolio work and future client systems.',
+    text: 'The main KSJ Digital website and central base for hosting, infrastructure, automation, and future client systems.',
   },
   {
     title: 'KSJ Goliath',
     type: 'Flagship Product',
     status: 'Active Development',
-    text: 'Moderation, tickets, forms, embeds, security, backups, analytics and dashboard tools.',
+    text: 'Discord platform covering moderation, tickets, forms, embeds, security, backups, analytics, and dashboard tools.',
   },
   {
     title: 'TwoToneTaj',
     type: 'Client Project',
     status: 'Live',
-    text: 'Creator website, content hub, community platform and future merch integration.',
+    text: 'Creator website and community platform with a content hub, music player, creator tools, and future merch integration.',
   },
 ];
 
@@ -70,4 +70,13 @@ export const goliathFeatures = [
   'Backups',
   'Analytics',
   'Dashboard',
+];
+
+export const infrastructureItems = [
+  'VPS Infrastructure',
+  'GitHub Deployments',
+  'Secure Hosting',
+  'SSL Protection',
+  'Automated Backups',
+  'Monitoring & Recovery',
 ];
