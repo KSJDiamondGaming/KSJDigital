@@ -42,22 +42,22 @@ export const services = [
 
 export const projects = [
   {
+    title: 'KSJ Digital',
+    type: 'Business Platform',
+    status: 'Primary Platform',
+    text: 'The central hub for KSJ Digital services, hosting, automation, portfolio work and future client systems.',
+  },
+  {
     title: 'KSJ Goliath',
-    type: 'Discord Platform',
+    type: 'Flagship Product',
     status: 'Active Development',
-    text: 'Moderation, tickets, forms, embeds, security, backups and dashboard tools.',
+    text: 'Moderation, tickets, forms, embeds, security, backups, analytics and dashboard tools.',
   },
   {
     title: 'TwoToneTaj',
-    type: 'Creator Platform',
+    type: 'Client Project',
     status: 'Live',
     text: 'Creator website, content hub, community platform and future merch integration.',
-  },
-  {
-    title: 'KSJ Digital',
-    type: 'Business Platform',
-    status: 'Active Development',
-    text: 'Company website, hosting platform and client-facing digital services.',
   },
 ];
 
