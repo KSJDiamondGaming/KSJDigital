@@ -1,0 +1,49 @@
+@media (max-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trust-list,
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .nav {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    width: min(100% - 28px, var(--width));
+  }
+
+  .hero {
+    padding-top: 54px;
+  }
+
+  .hero h1 {
+    font-size: 44px;
+  }
+
+  .trust-list,
+  .card-grid,
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .logo-card,
+  .footer-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .logo-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .footer-right {
+    text-align: left;
+  }
+}
