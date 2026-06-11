@@ -1,4 +1,5 @@
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
+import { createDemoLoginSession } from '../portals/auth/authService';
 
 const portalHighlights = [
   'Secure Access',
@@ -8,6 +9,11 @@ const portalHighlights = [
 ];
 
 export default function Portals() {
+  function handleDemoLogin() {
+    createDemoLoginSession();
+    window.location.href = '/portals/dashboard';
+  }
+
   return (
     <main className="portals-shell portals-access-only">
       <section className="portals-hero portals-public-hero">
@@ -50,9 +56,9 @@ export default function Portals() {
               <span>Remember me</span>
               <span>Forgot password?</span>
             </div>
-            <button type="button">Login</button>
+            <button type="button" onClick={handleDemoLogin}>Login</button>
           </form>
-          <small>Account access is created and approved by KSJ Digital.</small>
+          <small>Temporary demo login is enabled while authentication is being built.</small>
         </aside>
       </section>
 
