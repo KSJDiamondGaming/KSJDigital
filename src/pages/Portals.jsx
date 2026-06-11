@@ -15,10 +15,10 @@ export default function Portals() {
   }
 
   return (
-    <main className="portals-shell portals-access-only">
+    <main className="portals-shell portals-access-only portals-access-polished">
       <section className="portals-hero portals-public-hero">
-        <div className="portals-brand-card portals-public-card">
-          <img src={KsjDigitalLogo} alt="KSJ Digital" className="portals-logo" />
+        <div className="portals-brand-card portals-public-card portals-public-card-polished">
+          <img src={KsjDigitalLogo} alt="KSJ Digital" className="portals-logo portals-main-logo" />
 
           <div>
             <p className="eyebrow">KSJ Digital Portals</p>
@@ -27,9 +27,9 @@ export default function Portals() {
               Secure access for approved KSJ Digital clients to manage content,
               request publishing, access support, and keep their digital presence under control.
             </p>
-            <div className="portal-feature-row" aria-label="Portal features">
+            <div className="portal-check-list" aria-label="Portal features">
               {portalHighlights.map((item) => (
-                <span key={item}>{item}</span>
+                <span key={item}>✓ {item}</span>
               ))}
             </div>
           </div>
@@ -58,11 +58,11 @@ export default function Portals() {
             </div>
             <button type="button" onClick={handleDemoLogin}>Login</button>
           </form>
-          <small>Temporary demo login is enabled while authentication is being built.</small>
+          <small>Secure access is available to approved KSJ Digital clients only.</small>
         </aside>
       </section>
 
-      <section className="portal-access-note" aria-label="Portal security notice">
+      <section className="portal-access-note portal-access-note-compact" aria-label="Portal security notice">
         <div>
           <p className="eyebrow">Secure client access</p>
           <h2>Private tools for authorised users only.</h2>
