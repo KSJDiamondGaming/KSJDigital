@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 import { portalUsers } from '../portals/data/users';
@@ -14,6 +16,7 @@ export default function PortalsAdmin() {
   const session = getStoredSession();
   const user = session?.user ?? portalUsers[0];
   const firstWebsite = portalWebsites[0];
+  const [notice, setNotice] = useState('');
 
   const adminStats = [
     { label: 'Users', value: String(portalUsers.length) },
@@ -25,6 +28,10 @@ export default function PortalsAdmin() {
   function handleLogout() {
     clearSession();
     window.location.href = '/portals';
+  }
+
+  function handleCreateUser() {
+    setNotice('User creation UI is ready. Backend storage is the next required step before accounts can be saved permanently.');
   }
 
   return (
@@ -96,8 +103,10 @@ export default function PortalsAdmin() {
                     <option value="staff">Staff</option>
                   </select>
                 </label>
-                <button type="button">Create User</button>
+                <button type="button" onClick={handleCreateUser}>Create User</button>
               </div>
+
+              {notice && <p className="portal-inline-notice">{notice}</p>}
             </section>
 
             <section className="portal-help-card">
