@@ -5,11 +5,13 @@ import {
   portalRecentActivity,
   portalUser,
 } from '../data/portalData';
+import { PORTAL_ROLES } from '../portals/auth/permissions';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 
 export default function PortalsDashboard() {
   const session = getStoredSession();
   const user = session?.user ?? portalUser;
+  const isOwner = user.role === PORTAL_ROLES.OWNER;
 
   function handleLogout() {
     clearSession();
@@ -24,11 +26,12 @@ export default function PortalsDashboard() {
           <span>Portals</span>
           <nav>
             <a href="/portals/dashboard" className="active">Dashboard</a>
-            <a href="/portals/websites">Websites</a>
+            <a href="/portals/websites/twotonetaj">My Website</a>
             <a href="/portals/drafts">Drafts</a>
             <a href="/portals/publish-requests">Publish Requests</a>
             <a href="/portals/support">Support</a>
             <a href="/portals/account">Account</a>
+            {isOwner && <a href="/portals/management" className="portal-owner-link">Management Panel</a>}
           </nav>
         </aside>
 
@@ -39,7 +42,10 @@ export default function PortalsDashboard() {
               <h2>Client Dashboard</h2>
               <p className="portal-role-line">Role: <strong>{user.role}</strong></p>
             </div>
-            <button className="portal-logout-button" type="button" onClick={handleLogout}>Logout</button>
+            <div className="portal-header-actions">
+              {isOwner && <a className="portal-management-button" href="/portals/management">Management Panel</a>}
+              <button className="portal-logout-button" type="button" onClick={handleLogout}>Logout</button>
+            </div>
           </header>
 
           <article className="portal-site-card">
