@@ -2,6 +2,8 @@ import Header from './components/Header';
 import Home from './pages/Home';
 import Portals from './pages/Portals';
 import PortalsAdmin from './pages/PortalsAdmin';
+import PortalsAdminUsers from './pages/PortalsAdminUsers';
+import PortalsAdminWebsites from './pages/PortalsAdminWebsites';
 import PortalsDashboard from './pages/PortalsDashboard';
 import Footer from './components/Footer';
 import { PORTAL_ROLES } from './portals/auth/permissions';
@@ -20,6 +22,9 @@ export default function App() {
       window.location.href = '/portals';
       return null;
     }
+
+    if (path === '/portals/admin/users') return <PortalsAdminUsers />;
+    if (path === '/portals/admin/websites') return <PortalsAdminWebsites />;
 
     return <PortalsAdmin />;
   }
