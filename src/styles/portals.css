@@ -7,8 +7,15 @@
     linear-gradient(180deg, #02050b 0%, #050914 48%, #02050b 100%);
 }
 
+.portals-access-only {
+  display: grid;
+  align-content: center;
+  gap: 22px;
+}
+
 .portals-hero,
-.portal-dashboard-frame {
+.portal-dashboard-frame,
+.portal-access-note {
   width: min(100%, 1480px);
   margin: 0 auto;
 }
@@ -31,7 +38,8 @@
 .portal-action-grid button,
 .portal-section-list article,
 .portal-content-snapshot,
-.portal-snapshot-grid article {
+.portal-snapshot-grid article,
+.portal-access-note {
   border: 1px solid rgba(139, 178, 255, 0.18);
   border-radius: 24px;
   background: rgba(8, 15, 29, 0.84);
@@ -143,7 +151,8 @@
 .portal-manage-button,
 .portal-editor-header a,
 .portal-help-card a,
-.portal-publish-card button {
+.portal-publish-card button,
+.portal-access-note a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -162,6 +171,27 @@
   display: block;
   margin-top: 18px;
   color: var(--muted);
+}
+
+.portal-access-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px;
+}
+
+.portal-access-note h2 {
+  margin-bottom: 10px;
+  font-size: clamp(26px, 3vw, 38px);
+}
+
+.portal-access-note p:not(.eyebrow) {
+  max-width: 820px;
+}
+
+.portal-access-note a {
+  white-space: nowrap;
 }
 
 .portal-dashboard-frame {
@@ -609,7 +639,8 @@
   .portal-login-card,
   .portal-dashboard-main,
   .portal-editor-panel,
-  .portal-content-snapshot {
+  .portal-content-snapshot,
+  .portal-access-note {
     padding: 20px;
   }
 
@@ -627,7 +658,8 @@
 
   .portal-dashboard-header,
   .portal-editor-header,
-  .portal-section-list article {
+  .portal-section-list article,
+  .portal-access-note {
     align-items: flex-start;
     flex-direction: column;
   }
