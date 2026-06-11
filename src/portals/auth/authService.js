@@ -5,7 +5,9 @@ import { createPortalSession, storeSession } from './sessionManager';
 const demoUsers = [
   {
     ...portalUser,
-    role: PORTAL_ROLES.CLIENT,
+    name: 'KSJ Digital Admin',
+    initials: 'KSJ',
+    role: PORTAL_ROLES.OWNER,
     projectIds: ['twotonetaj'],
   },
 ];
