@@ -64,6 +64,32 @@
   font-weight: 800;
 }
 
+.portal-selection-guide {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.portal-selection-guide h3 {
+  margin-bottom: 0;
+}
+
+.portal-detail-group {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 178, 255, 0.14);
+}
+
+.portal-detail-group strong {
+  color: var(--silver);
+}
+
+.portal-detail-group small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .portal-admin-table {
   display: grid;
   gap: 10px;
