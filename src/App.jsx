@@ -1,12 +1,15 @@
 import Header from './components/Header';
 import Home from './pages/Home';
 import Portals from './pages/Portals';
+import PortalsAccount from './pages/PortalsAccount';
 import PortalsAdmin from './pages/PortalsAdmin';
+import PortalsAdminSettings from './pages/PortalsAdminSettings';
 import PortalsAdminUsers from './pages/PortalsAdminUsers';
 import PortalsAdminWebsites from './pages/PortalsAdminWebsites';
 import PortalsDashboard from './pages/PortalsDashboard';
 import PortalsDrafts from './pages/PortalsDrafts';
 import PortalsPublishRequests from './pages/PortalsPublishRequests';
+import PortalsSupport from './pages/PortalsSupport';
 import PortalsWebsiteEditor from './pages/PortalsWebsiteEditor';
 import Footer from './components/Footer';
 import { PORTAL_ROLES } from './portals/auth/permissions';
@@ -31,11 +34,12 @@ export default function App() {
 
     if (path === '/portals/admin/users') return <PortalsAdminUsers />;
     if (path === '/portals/admin/websites') return <PortalsAdminWebsites />;
+    if (path === '/portals/admin/settings') return <PortalsAdminSettings />;
 
     return <PortalsAdmin />;
   }
 
-  if (isPortalDashboard || isPortalDrafts || isPortalPublishRequests || isPortalWebsiteEditor) {
+  if (isPortalDashboard || isPortalDrafts || isPortalPublishRequests || isPortalWebsiteEditor || path === '/portals/support' || path === '/portals/account') {
     const session = getStoredSession();
 
     if (!session) {
@@ -45,6 +49,8 @@ export default function App() {
 
     if (isPortalDrafts) return <PortalsDrafts />;
     if (isPortalPublishRequests) return <PortalsPublishRequests />;
+    if (path === '/portals/support') return <PortalsSupport />;
+    if (path === '/portals/account') return <PortalsAccount />;
     if (isPortalWebsiteEditor) return <PortalsWebsiteEditor />;
     return <PortalsDashboard />;
   }
