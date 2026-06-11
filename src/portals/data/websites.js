@@ -1,5 +1,18 @@
 export const portalWebsites = [
   {
+    id: 'ksjdigital',
+    name: 'KSJ Digital',
+    type: 'Business Website',
+    domain: 'ksjdigital.co.uk',
+    url: 'https://ksjdigital.co.uk/',
+    status: 'Live',
+    access: 'Owner Management',
+    publishMode: 'Owner Controlled',
+    plan: 'KSJ Internal',
+    assignedUserIds: ['ksj-admin'],
+    description: 'Internal KSJ Digital website and portal management access for the owner/admin account.',
+  },
+  {
     id: 'twotonetaj',
     name: 'TwoToneTaj',
     type: 'Creator Website',
@@ -10,6 +23,7 @@ export const portalWebsites = [
     publishMode: 'Approval Required',
     plan: 'Managed Website',
     assignedUserIds: ['twotonetaj-client'],
+    description: 'Client creator website managed through KSJ Digital Portals with draft-first publishing approval.',
   },
 ];
 
