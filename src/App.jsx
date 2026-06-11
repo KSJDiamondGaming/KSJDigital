@@ -6,6 +6,7 @@ import PortalsAdminUsers from './pages/PortalsAdminUsers';
 import PortalsAdminWebsites from './pages/PortalsAdminWebsites';
 import PortalsDashboard from './pages/PortalsDashboard';
 import PortalsDrafts from './pages/PortalsDrafts';
+import PortalsPublishRequests from './pages/PortalsPublishRequests';
 import PortalsWebsiteEditor from './pages/PortalsWebsiteEditor';
 import Footer from './components/Footer';
 import { PORTAL_ROLES } from './portals/auth/permissions';
@@ -16,6 +17,7 @@ export default function App() {
   const isPortalAdmin = path === '/portals/admin' || path.startsWith('/portals/admin/') || path === '/portals/management';
   const isPortalDashboard = path === '/portals/dashboard';
   const isPortalDrafts = path === '/portals/drafts';
+  const isPortalPublishRequests = path === '/portals/publish-requests';
   const isPortalWebsiteEditor = path === '/portals/websites/twotonetaj';
   const isPortalsRoute = path === '/portals' || path.startsWith('/portals/');
 
@@ -33,7 +35,7 @@ export default function App() {
     return <PortalsAdmin />;
   }
 
-  if (isPortalDashboard || isPortalDrafts || isPortalWebsiteEditor) {
+  if (isPortalDashboard || isPortalDrafts || isPortalPublishRequests || isPortalWebsiteEditor) {
     const session = getStoredSession();
 
     if (!session) {
@@ -42,6 +44,7 @@ export default function App() {
     }
 
     if (isPortalDrafts) return <PortalsDrafts />;
+    if (isPortalPublishRequests) return <PortalsPublishRequests />;
     if (isPortalWebsiteEditor) return <PortalsWebsiteEditor />;
     return <PortalsDashboard />;
   }
