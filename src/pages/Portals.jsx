@@ -8,8 +8,17 @@ import {
   portalRecentActivity,
   portalUser,
 } from '../data/portalData';
+import { getDemoPortalUser } from '../portals/auth/authService';
+import { canAccessProject, hasPermission, PORTAL_PERMISSIONS } from '../portals/auth/permissions';
+import { getActivePortalUser } from '../portals/auth/sessionManager';
 
 export default function Portals() {
+  const fallbackUser = getDemoPortalUser();
+  const activeUser = getActivePortalUser(fallbackUser);
+  const canManageProject = canAccessProject(activeUser, portalProject.id);
+  const canRequestPublish = hasPermission(activeUser, PORTAL_PERMISSIONS.REQUEST_PUBLISH);
+  const canApprovePublish = hasPermission(activeUser, PORTAL_PERMISSIONS.APPROVE_PUBLISH);
+
   return (
     <main className="portals-shell">
       <section className="portals-hero">
@@ -38,7 +47,7 @@ export default function Portals() {
           <form>
             <label>
               Email Address
-              <input type="email" placeholder="client@example.com" disabled />
+              <input type="email" placeholder={portalUser.email} disabled />
             </label>
             <label>
               Password
@@ -70,10 +79,13 @@ export default function Portals() {
         <div className="portal-dashboard-main">
           <header className="portal-dashboard-header">
             <div>
-              <p className="eyebrow">Welcome, {portalUser.name}</p>
+              <p className="eyebrow">Welcome, {activeUser.name}</p>
               <h2>Client Dashboard</h2>
+              <p className="portal-role-line">
+                Role: <strong>{activeUser.role}</strong> • Project Access: <strong>{canManageProject ? 'Allowed' : 'Restricted'}</strong>
+              </p>
             </div>
-            <span className="portal-avatar">{portalUser.initials}</span>
+            <span className="portal-avatar">{activeUser.initials}</span>
           </header>
 
           <article className="portal-site-card">
@@ -92,7 +104,7 @@ export default function Portals() {
                 </div>
                 <div>
                   <dt>Access</dt>
-                  <dd>{portalProject.access}</dd>
+                  <dd>{canManageProject ? portalProject.access : 'Restricted'}</dd>
                 </div>
                 <div>
                   <dt>Publish Mode</dt>
@@ -164,7 +176,8 @@ export default function Portals() {
                 <h3>Publish Status</h3>
                 <p>{portalContentSnapshot.publish.nextStep}</p>
                 <button type="button">Save Changes</button>
-                <button type="button" className="secondary">Request Publish</button>
+                <button type="button" className="secondary" disabled={!canRequestPublish}>Request Publish</button>
+                {canApprovePublish && <button type="button" className="secondary">Approve Publish</button>}
                 <div>
                   <strong>Recent Activity</strong>
                   {portalRecentActivity.map((item) => <small key={item}>{item}</small>)}
