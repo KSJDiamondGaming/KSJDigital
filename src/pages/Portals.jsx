@@ -1,54 +1,13 @@
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
-
-const quickActions = [
-  {
-    icon: '⌂',
-    title: 'Edit Homepage',
-    text: 'Update hero content, featured sections, and calls to action.',
-  },
-  {
-    icon: '✎',
-    title: 'Edit About',
-    text: 'Manage biography, story sections, images, and page copy.',
-  },
-  {
-    icon: '✉',
-    title: 'Edit Contact',
-    text: 'Update contact details, support email, and external links.',
-  },
-  {
-    icon: '◉',
-    title: 'Preview Website',
-    text: 'Review changes before requesting a live publish.',
-  },
-];
-
-const editorTabs = ['Homepage', 'About', 'Social Links', 'Schedule', 'Contact', 'Site Settings'];
-
-const editableSections = [
-  {
-    title: 'Hero Section',
-    text: 'Headline, intro copy, hero buttons, and featured image.',
-  },
-  {
-    title: 'About Section',
-    text: 'Creator story, highlight cards, and community message.',
-  },
-  {
-    title: 'Featured Content',
-    text: 'Videos, Twitch panel, YouTube feed placeholders, and links.',
-  },
-  {
-    title: 'Merch Section',
-    text: 'Coming soon text, product previews, and shop messaging.',
-  },
-];
-
-const recentActivity = [
-  'Homepage draft prepared',
-  'Social links ready for review',
-  'Contact information checked',
-];
+import {
+  portalContentSnapshot,
+  portalEditableSections,
+  portalEditorTabs,
+  portalProject,
+  portalQuickActions,
+  portalRecentActivity,
+  portalUser,
+} from '../data/portalData';
 
 export default function Portals() {
   return (
@@ -111,44 +70,44 @@ export default function Portals() {
         <div className="portal-dashboard-main">
           <header className="portal-dashboard-header">
             <div>
-              <p className="eyebrow">Welcome, TwoToneTaj</p>
+              <p className="eyebrow">Welcome, {portalUser.name}</p>
               <h2>Client Dashboard</h2>
             </div>
-            <span className="portal-avatar">TT</span>
+            <span className="portal-avatar">{portalUser.initials}</span>
           </header>
 
           <article className="portal-site-card">
             <div className="portal-site-preview">
-              <strong>TWOTONETAJ</strong>
-              <span>twotonetaj.ksjdigital.co.uk</span>
+              <strong>{portalProject.name.toUpperCase()}</strong>
+              <span>{portalProject.domain}</span>
             </div>
             <div>
-              <span className="portal-status">Live</span>
-              <h3>TwoToneTaj</h3>
-              <p>Creator website and community platform managed through KSJ Digital Portals.</p>
+              <span className="portal-status">{portalProject.status}</span>
+              <h3>{portalProject.name}</h3>
+              <p>{portalProject.description}</p>
               <dl>
                 <div>
                   <dt>Status</dt>
-                  <dd>Live</dd>
+                  <dd>{portalProject.status}</dd>
                 </div>
                 <div>
                   <dt>Access</dt>
-                  <dd>Website Management</dd>
+                  <dd>{portalProject.access}</dd>
                 </div>
                 <div>
                   <dt>Publish Mode</dt>
-                  <dd>Approval Required</dd>
+                  <dd>{portalProject.publishMode}</dd>
                 </div>
               </dl>
             </div>
-            <a className="portal-manage-button" href="/portals/websites/twotonetaj">Manage Website</a>
+            <a className="portal-manage-button" href={`/portals/websites/${portalProject.id}`}>Manage Website</a>
           </article>
 
           <div className="portal-grid-two">
             <section>
               <h3>Quick Actions</h3>
               <div className="portal-action-grid">
-                {quickActions.map((action) => (
+                {portalQuickActions.map((action) => (
                   <button type="button" key={action.title}>
                     <span>{action.icon}</span>
                     <strong>{action.title}</strong>
@@ -169,25 +128,31 @@ export default function Portals() {
             <div className="portal-editor-header">
               <div>
                 <p className="eyebrow">Website Editor</p>
-                <h2>TwoToneTaj</h2>
+                <h2>{portalProject.name}</h2>
                 <p>Edit and manage website content safely before requesting publication.</p>
               </div>
-              <a href="https://twotonetaj.ksjdigital.co.uk/">Preview Website</a>
+              <a href={portalProject.url}>Preview Website</a>
             </div>
 
             <div className="portal-tabs" aria-label="Website editor tabs">
-              {editorTabs.map((tab, index) => (
+              {portalEditorTabs.map((tab, index) => (
                 <button type="button" className={index === 0 ? 'active' : ''} key={tab}>{tab}</button>
               ))}
             </div>
 
             <div className="portal-editor-layout">
               <div className="portal-section-list">
-                {editableSections.map((section) => (
-                  <article key={section.title}>
+                {portalEditableSections.map((section) => (
+                  <article key={section.id}>
                     <div>
-                      <strong>{section.title}</strong>
+                      <div className="portal-section-title-row">
+                        <strong>{section.title}</strong>
+                        <span>{section.status}</span>
+                      </div>
                       <p>{section.text}</p>
+                      <ul>
+                        {section.fields.map((field) => <li key={field}>{field}</li>)}
+                      </ul>
                     </div>
                     <button type="button">Edit</button>
                   </article>
@@ -197,14 +162,43 @@ export default function Portals() {
               <aside className="portal-publish-card">
                 <span className="portal-draft-badge">Draft</span>
                 <h3>Publish Status</h3>
-                <p>You have unpublished changes waiting for review.</p>
+                <p>{portalContentSnapshot.publish.nextStep}</p>
                 <button type="button">Save Changes</button>
                 <button type="button" className="secondary">Request Publish</button>
                 <div>
                   <strong>Recent Activity</strong>
-                  {recentActivity.map((item) => <small key={item}>{item}</small>)}
+                  {portalRecentActivity.map((item) => <small key={item}>{item}</small>)}
                 </div>
               </aside>
+            </div>
+          </section>
+
+          <section className="portal-content-snapshot">
+            <div>
+              <p className="eyebrow">Current content structure</p>
+              <h2>TwoToneTaj editable content</h2>
+              <p>
+                This is the first structured content layer that will later connect to save drafts,
+                preview changes, and publish approved updates to the live website.
+              </p>
+            </div>
+
+            <div className="portal-snapshot-grid">
+              <article>
+                <span>Homepage</span>
+                <strong>{portalContentSnapshot.homepage.heroTitle}</strong>
+                <p>{portalContentSnapshot.homepage.summary}</p>
+              </article>
+              <article>
+                <span>About</span>
+                <strong>{portalContentSnapshot.about.headline}</strong>
+                <p>{portalContentSnapshot.about.quote}</p>
+              </article>
+              <article>
+                <span>Contact</span>
+                <strong>{portalContentSnapshot.contact.email}</strong>
+                <p>Support: {portalContentSnapshot.contact.supportEmail}</p>
+              </article>
             </div>
           </section>
         </div>
