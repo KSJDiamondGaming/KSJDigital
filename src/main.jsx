@@ -5,6 +5,7 @@ import './styles/theme.css';
 import './styles/core.css';
 import './styles/home.css';
 import './styles/portals.css';
+import './styles/portalDashboard.css';
 import './styles/responsive.css';
 
 import App from './App.jsx';
