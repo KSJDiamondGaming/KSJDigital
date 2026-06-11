@@ -16,7 +16,7 @@
 .portals-hero,
 .portal-dashboard-frame,
 .portal-access-note {
-  width: min(100%, 1480px);
+  width: min(100%, 1360px);
   margin: 0 auto;
 }
 
@@ -26,6 +26,10 @@
   gap: 22px;
   align-items: stretch;
   margin-bottom: 22px;
+}
+
+.portals-public-hero {
+  grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
 }
 
 .portals-brand-card,
@@ -54,17 +58,43 @@
   padding: 42px;
 }
 
+.portals-public-card {
+  grid-template-columns: 1fr;
+  align-content: center;
+  padding: clamp(32px, 5vw, 64px);
+  overflow: hidden;
+}
+
+.portal-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 34px;
+}
+
+.portal-brand-lockup span {
+  color: var(--blue-soft);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .portals-logo {
   width: 190px;
   max-width: 100%;
   filter: drop-shadow(0 20px 50px rgba(47, 124, 255, 0.24));
 }
 
+.portal-brand-lockup .portals-logo {
+  width: 168px;
+}
+
 .portals-brand-card h1 {
   max-width: 780px;
   margin-bottom: 18px;
-  font-size: clamp(42px, 5vw, 74px);
-  line-height: 0.96;
+  font-size: clamp(44px, 4.6vw, 68px);
+  line-height: 0.98;
 }
 
 .portals-brand-card p:not(.eyebrow) {
@@ -74,29 +104,48 @@
 
 .portal-feature-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-top: 34px;
 }
 
 .portal-feature-row span {
   display: grid;
-  min-height: 70px;
+  min-height: 64px;
   place-items: center;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid rgba(139, 178, 255, 0.14);
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--silver);
   background: rgba(255, 255, 255, 0.035);
+  font-size: 13px;
   font-weight: 900;
   text-align: center;
 }
 
 .portal-login-card {
-  padding: 34px;
+  display: grid;
+  align-content: center;
+  padding: clamp(30px, 4vw, 52px);
   background:
     radial-gradient(circle at 50% 0%, rgba(47, 124, 255, 0.18), transparent 16rem),
     rgba(8, 15, 29, 0.9);
+}
+
+.portal-login-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.portal-login-topline span {
+  color: var(--blue-soft);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .portal-login-card img {
@@ -132,12 +181,16 @@
 
 .portal-login-card input {
   width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
+  min-height: 52px;
+  padding: 0 16px;
   border: 1px solid rgba(139, 178, 255, 0.18);
   border-radius: 14px;
   color: var(--text);
   background: rgba(0, 0, 0, 0.22);
+}
+
+.portal-login-card input::placeholder {
+  color: rgba(167, 179, 199, 0.72);
 }
 
 .portal-login-options {
@@ -178,7 +231,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 26px;
+  padding: 30px;
 }
 
 .portal-access-note h2 {
@@ -632,8 +685,14 @@
     padding: 26px;
   }
 
-  .portals-logo {
-    width: 150px;
+  .portals-logo,
+  .portal-brand-lockup .portals-logo {
+    width: 145px;
+  }
+
+  .portal-brand-lockup {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .portal-login-card,
