@@ -106,3 +106,27 @@ export function getPublishRequestsByWebsite(websiteId) {
 export function getWebsiteRegistry() {
   return getPortalData().websiteRegistry ?? {};
 }
+
+export function getContentSchemas() {
+  return getPortalData().contentSchemas ?? {};
+}
+
+export function getWebsiteContent(websiteId) {
+  return getPortalData().content?.[websiteId] ?? {};
+}
+
+export function saveWebsiteDraftContent(websiteId, pageId, draftContent) {
+  return updatePortalData((data) => ({
+    ...data,
+    content: {
+      ...(data.content ?? {}),
+      [websiteId]: {
+        ...(data.content?.[websiteId] ?? {}),
+        [pageId]: {
+          ...(data.content?.[websiteId]?.[pageId] ?? {}),
+          draft: draftContent,
+        },
+      },
+    },
+  }));
+}
