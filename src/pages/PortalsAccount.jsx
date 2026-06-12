@@ -1,9 +1,21 @@
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 
+const roleLabels = {
+  owner: 'Owner',
+  staff: 'Website Manager',
+  websiteManager: 'Website Manager',
+  supportAgent: 'Support Agent',
+  client: 'Client Administrator',
+  clientAdmin: 'Client Administrator',
+  contentEditor: 'Content Editor',
+  viewer: 'Viewer',
+};
+
 export default function PortalsAccount() {
   const session = getStoredSession();
   const user = session?.user;
+  const roleLabel = roleLabels[user?.role] ?? 'Client';
 
   function handleLogout() {
     clearSession();
@@ -52,7 +64,7 @@ export default function PortalsAccount() {
                 </label>
                 <label>
                   Role
-                  <input type="text" value={user?.role ?? ''} readOnly />
+                  <input type="text" value={roleLabel} readOnly />
                 </label>
                 <label>
                   Access
