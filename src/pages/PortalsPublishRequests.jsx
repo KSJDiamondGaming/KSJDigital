@@ -1,10 +1,10 @@
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
-import { portalPublishRequests } from '../portals/data/publishRequests';
-import { getPortalWebsiteById } from '../portals/data/websites';
+import { getPortalPublishRequests, getPortalWebsiteById } from '../portals/data/portalManager';
 
 export default function PortalsPublishRequests() {
   const session = getStoredSession();
+  const portalPublishRequests = getPortalPublishRequests();
 
   function handleLogout() {
     clearSession();
