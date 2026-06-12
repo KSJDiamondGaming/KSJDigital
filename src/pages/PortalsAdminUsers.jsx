@@ -7,16 +7,40 @@ import { portalWebsites } from '../portals/data/websites';
 
 const roleDescriptions = {
   owner: {
+    label: 'Owner',
     title: 'Owner Access',
-    text: 'Full KSJ Digital management access. Can manage clients, users, websites, support, publishing workflows, and owner-only portal settings.',
+    text: 'Highest KSJ Digital access. Can manage every client, user, website, support request, publish request, permission, and portal setting.',
+    permissions: ['All websites', 'All users', 'All requests', 'All settings', 'Full management access'],
   },
-  staff: {
-    title: 'Staff Access',
-    text: 'Internal KSJ Digital support access. Staff can help manage client website content, requests, and support tasks without full owner control.',
+  websiteManager: {
+    label: 'Website Manager',
+    title: 'Website Manager Access',
+    text: 'Internal KSJ staff role for helping clients with assigned websites. Can make small content edits, image updates, and draft changes on assigned sites only.',
+    permissions: ['Assigned websites only', 'Content edits', 'Image changes', 'Draft support', 'No user management'],
   },
-  client: {
-    title: 'Client Access',
-    text: 'Client-only access. Clients can view assigned websites, edit allowed content, save drafts, request publishing, and contact support.',
+  supportAgent: {
+    label: 'Support Agent',
+    title: 'Support Agent Access',
+    text: 'Support-only staff role. Can read, write, and respond to portal requests, support tickets, and client messages without editing website content.',
+    permissions: ['Support inbox', 'Tickets', 'Client messages', 'Request replies', 'No website editing'],
+  },
+  clientAdmin: {
+    label: 'Client Administrator',
+    title: 'Client Administrator Access',
+    text: 'Highest client role. Can edit allowed website content such as text and images, create drafts, upload media, and submit publish/support requests.',
+    permissions: ['Assigned websites', 'Text edits', 'Image edits', 'Drafts', 'Publish requests'],
+  },
+  contentEditor: {
+    label: 'Content Editor',
+    title: 'Content Editor Access',
+    text: 'Limited client role for simple content work. Can upload images, adjust basic text, manage prices/products when enabled, and save drafts for review.',
+    permissions: ['Basic content edits', 'Image uploads', 'Price/product updates', 'Draft only', 'No publishing'],
+  },
+  viewer: {
+    label: 'Viewer',
+    title: 'Viewer Access',
+    text: 'Read-only role. Can view assigned portal areas, website information, drafts, and requests, but cannot make changes.',
+    permissions: ['Read only', 'Assigned websites', 'View drafts', 'View requests', 'No edits'],
   },
 };
 
@@ -26,8 +50,7 @@ const statusDescriptions = {
 };
 
 function formatRole(role) {
-  if (!role) return '';
-  return role.charAt(0).toUpperCase() + role.slice(1);
+  return roleDescriptions[role]?.label ?? 'Client Administrator';
 }
 
 function getWebsiteNames(websiteIds) {
@@ -42,7 +65,7 @@ function createEditorState(user) {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role,
+    role: user.role === 'staff' ? 'websiteManager' : user.role === 'client' ? 'clientAdmin' : user.role,
     status: user.status,
     websiteIds: user.websiteIds?.length ? user.websiteIds : [portalWebsites[0]?.id].filter(Boolean),
   };
@@ -53,7 +76,7 @@ function createBlankUserState() {
     id: '',
     name: '',
     email: '',
-    role: 'client',
+    role: 'clientAdmin',
     status: 'Active',
     websiteIds: [portalWebsites[0]?.id].filter(Boolean),
   };
@@ -66,7 +89,10 @@ function createUserId(email) {
 export default function PortalsAdminUsers() {
   const session = getStoredSession();
   const user = session?.user ?? portalUsers[0];
-  const [users, setUsers] = useState(portalUsers);
+  const [users, setUsers] = useState(portalUsers.map((portalUser) => ({
+    ...portalUser,
+    role: portalUser.role === 'staff' ? 'websiteManager' : portalUser.role === 'client' ? 'clientAdmin' : portalUser.role,
+  })));
   const [mode, setMode] = useState('edit');
   const [selectedUserId, setSelectedUserId] = useState(portalUsers[0]?.id ?? '');
   const [editor, setEditor] = useState(() => createEditorState(portalUsers[0]));
@@ -82,7 +108,7 @@ export default function PortalsAdminUsers() {
     [editor.websiteIds],
   );
 
-  const roleInfo = roleDescriptions[editor.role] ?? roleDescriptions.client;
+  const roleInfo = roleDescriptions[editor.role] ?? roleDescriptions.clientAdmin;
   const statusInfo = statusDescriptions[editor.status] ?? statusDescriptions.Active;
 
   function handleLogout() {
@@ -289,9 +315,9 @@ export default function PortalsAdminUsers() {
                 <label>
                   Role
                   <select value={editor.role} onChange={(event) => updateEditor('role', event.target.value)}>
-                    <option value="owner">Owner</option>
-                    <option value="staff">Staff</option>
-                    <option value="client">Client</option>
+                    {Object.entries(roleDescriptions).map(([roleId, role]) => (
+                      <option value={roleId} key={roleId}>{role.label}</option>
+                    ))}
                   </select>
                 </label>
                 <fieldset className="portal-website-checklist">
@@ -322,6 +348,11 @@ export default function PortalsAdminUsers() {
               <p className="eyebrow">Selection Details</p>
               <h3>{roleInfo.title}</h3>
               <p>{roleInfo.text}</p>
+
+              <div className="portal-detail-group">
+                <strong>Permissions</strong>
+                {roleInfo.permissions.map((permission) => <small key={permission}>✓ {permission}</small>)}
+              </div>
 
               <div className="portal-detail-group">
                 <strong>Status: {editor.status}</strong>
