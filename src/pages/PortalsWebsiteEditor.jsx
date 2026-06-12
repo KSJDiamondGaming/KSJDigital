@@ -1,7 +1,7 @@
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { portalContentSnapshot, portalEditableSections } from '../data/portalData';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
-import { getPortalWebsiteById } from '../portals/data/websites';
+import { getPortalWebsiteById } from '../portals/data/portalManager';
 
 export default function PortalsWebsiteEditor() {
   const session = getStoredSession();
