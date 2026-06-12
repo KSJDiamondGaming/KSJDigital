@@ -1,39 +1,38 @@
-import { useState } from 'react';
-
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 import { getPortalData } from '../portals/data/portalManager';
 
-const adminActions = [
-  'Create client user',
-  'Assign website access',
-  'Reset password',
-  'Manage account access',
-];
+function getActiveBackups(websites) {
+  return websites.filter((website) => website.backup?.status && website.backup.status !== 'No active backup').length;
+}
 
 export default function PortalsAdmin() {
   const session = getStoredSession();
   const portalData = getPortalData();
   const portalUsers = portalData.users ?? [];
   const portalWebsites = portalData.websites ?? [];
+  const publishRequests = portalData.publishRequests ?? [];
+  const supportTickets = portalData.supportTickets ?? [];
   const user = session?.user ?? portalUsers[0];
-  const firstWebsite = portalWebsites[0];
-  const [notice, setNotice] = useState('');
 
   const adminStats = [
-    { label: 'Users', value: String(portalUsers.length) },
+    { label: 'Clients', value: String(portalUsers.filter((item) => item.role !== 'owner').length) },
     { label: 'Websites', value: String(portalWebsites.length) },
-    { label: 'Drafts', value: String(portalData.drafts?.length ?? 0) },
-    { label: 'Publish Requests', value: String(portalData.publishRequests?.length ?? 0) },
+    { label: 'Pending Publishes', value: String(publishRequests.filter((item) => ['Draft', 'Pending', 'Pending Review'].includes(item.status)).length) },
+    { label: 'Open Tickets', value: String(supportTickets.filter((item) => item.status !== 'Closed').length) },
+    { label: 'Active Backups', value: String(getActiveBackups(portalWebsites)) },
+  ];
+
+  const recentActivity = [
+    'Website Management settings were updated',
+    'Central portal data store connected',
+    'Publish workflow awaiting backend integration',
+    'Support ticket system planned next',
   ];
 
   function handleLogout() {
     clearSession();
     window.location.href = '/portals';
-  }
-
-  function handleCreateUser() {
-    setNotice('Use Client Management to create users, assign roles, and manage website access.');
   }
 
   return (
@@ -43,7 +42,8 @@ export default function PortalsAdmin() {
           <img src={KsjDigitalLogo} alt="KSJ Digital" />
           <span>Management</span>
           <nav>
-            <a href="/portals/admin" className="active">Client Management</a>
+            <a href="/portals/admin" className="active">Admin Home</a>
+            <a href="/portals/admin/users">Client Management</a>
             <a href="/portals/admin/websites">Websites</a>
             <a href="/portals/admin/publish-requests">Publish Requests</a>
             <a href="/portals/dashboard">Client View</a>
@@ -55,7 +55,7 @@ export default function PortalsAdmin() {
           <header className="portal-dashboard-header">
             <div>
               <p className="eyebrow">KSJ Digital Admin</p>
-              <h2>Portal Management</h2>
+              <h2>Admin Dashboard</h2>
               <p className="portal-role-line">Signed in as <strong>{user?.name ?? 'KSJ Digital Admin'}</strong></p>
             </div>
             <button className="portal-logout-button" type="button" onClick={handleLogout}>Logout</button>
@@ -74,78 +74,53 @@ export default function PortalsAdmin() {
             <section className="portal-editor-panel">
               <div className="portal-editor-header">
                 <div>
-                  <p className="eyebrow">Users</p>
-                  <h2>Client Access</h2>
-                  <p>Create login access, assign websites, and manage permissions from the main Client Management page.</p>
+                  <p className="eyebrow">Quick Actions</p>
+                  <h2>Manage Portal</h2>
+                  <p>Jump straight into the core portal workflows.</p>
                 </div>
               </div>
-
-              <div className="portal-admin-form">
-                <label>
-                  Client Name
-                  <input type="text" placeholder="Example Client" />
-                </label>
-                <label>
-                  Client Email
-                  <input type="email" placeholder="client@example.com" />
-                </label>
-                <label>
-                  Assign Website
-                  <select defaultValue={firstWebsite?.id ?? ''}>
-                    {portalWebsites.map((website) => (
-                      <option value={website.id} key={website.id}>{website.name}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Role
-                  <select defaultValue="clientAdmin">
-                    <option value="clientAdmin">Client Administrator</option>
-                    <option value="contentEditor">Content Editor</option>
-                    <option value="websiteManager">Website Manager</option>
-                  </select>
-                </label>
-                <button type="button" onClick={handleCreateUser}>Open Client Management</button>
+              <div className="portal-inline-actions">
+                <a href="/portals/admin/users">Create Client</a>
+                <a href="/portals/admin/websites">Create Website</a>
+                <a href="/portals/admin/publish-requests">Review Publishes</a>
+                <a href="/portals/support">View Tickets</a>
               </div>
-
-              {notice && <p className="portal-inline-notice">{notice}</p>}
             </section>
 
             <section className="portal-help-card">
-              <h3>Admin Actions</h3>
+              <p className="eyebrow">Recent Activity</p>
+              <h3>Portal Timeline</h3>
               <div className="portal-activity-list">
-                {adminActions.map((action) => <small key={action}>{action}</small>)}
+                {recentActivity.map((activity) => <small key={activity}>{activity}</small>)}
               </div>
             </section>
           </div>
 
-          {firstWebsite && (
-            <article className="portal-site-card">
-              <div className="portal-site-preview">
-                <strong>{firstWebsite.name.toUpperCase()}</strong>
-                <span>{firstWebsite.domain}</span>
-              </div>
+          <section className="portal-editor-panel">
+            <div className="portal-editor-header">
               <div>
-                <span className="portal-status">{firstWebsite.status}</span>
-                <h3>Website Assignment</h3>
-                <p>{firstWebsite.name} is ready to be assigned to approved client users.</p>
-                <dl>
-                  <div>
-                    <dt>Website</dt>
-                    <dd>{firstWebsite.name}</dd>
-                  </div>
-                  <div>
-                    <dt>Access</dt>
-                    <dd>{firstWebsite.access}</dd>
-                  </div>
-                  <div>
-                    <dt>Publishing</dt>
-                    <dd>{firstWebsite.publishMode}</dd>
-                  </div>
-                </dl>
+                <p className="eyebrow">Websites</p>
+                <h2>Managed Sites Overview</h2>
+                <p>Status summary for every website connected to KSJ Digital Portals.</p>
               </div>
-            </article>
-          )}
+            </div>
+            <div className="portal-section-list">
+              {portalWebsites.map((website) => (
+                <article key={website.id}>
+                  <div>
+                    <div className="portal-section-title-row"><strong>{website.name}</strong><span>{website.hostingStatus ?? website.status}</span></div>
+                    <p>{website.domain}</p>
+                    <ul>
+                      <li>Portal: {website.portalStatus ?? 'Active'}</li>
+                      <li>Publish: {website.publishMode}</li>
+                      <li>Backup: {website.backup?.enabled ? `${website.backup?.retentionHours ?? 48}h enabled` : 'Disabled'}</li>
+                    </ul>
+                  </div>
+                  <a href="/portals/admin/websites">Manage</a>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
     </main>
