@@ -142,7 +142,66 @@ export const initialPortalData = {
     },
   ],
 
-  supportTickets: [],
+  supportTickets: [
+    {
+      id: 'ticket-001',
+      websiteId: 'twotonetaj',
+      clientId: 'twotonetaj-client',
+      subject: 'Homepage content update question',
+      status: 'Open',
+      priority: 'Normal',
+      assignedTo: 'ksj-admin',
+      createdAt: 'Demo ticket',
+      updatedAt: 'Awaiting staff reply',
+      summary: 'Client needs help understanding how homepage edits will be reviewed before publishing.',
+      messages: [
+        {
+          id: 'message-001',
+          author: 'TwoToneTaj',
+          type: 'client',
+          body: 'Can you confirm if homepage edits are saved as drafts before anything goes live?',
+          createdAt: 'Demo message',
+        },
+        {
+          id: 'message-002',
+          author: 'KSJ Digital Admin',
+          type: 'staff',
+          body: 'Yes. Content edits are saved as drafts first, then submitted for approval before publishing.',
+          createdAt: 'Demo reply',
+        },
+      ],
+      internalNotes: [
+        {
+          id: 'note-001',
+          author: 'KSJ Digital Admin',
+          body: 'Use this ticket as the default demo for the Support System V1 layout.',
+          createdAt: 'Internal demo note',
+        },
+      ],
+    },
+    {
+      id: 'ticket-002',
+      websiteId: 'ksjdigital',
+      clientId: 'ksj-admin',
+      subject: 'SSL and domain check',
+      status: 'Waiting On Staff',
+      priority: 'High',
+      assignedTo: 'ksj-admin',
+      createdAt: 'Demo ticket',
+      updatedAt: 'Needs review',
+      summary: 'Internal check for SSL/domain status display in the portal.',
+      messages: [
+        {
+          id: 'message-003',
+          author: 'KSJ Digital Admin',
+          type: 'staff',
+          body: 'Review the domain and SSL controls once backend hosting actions are connected.',
+          createdAt: 'Demo message',
+        },
+      ],
+      internalNotes: [],
+    },
+  ],
   backups: [],
   activityLogs: [],
 
