@@ -25,6 +25,8 @@ const emptyWebsiteForm = {
   assignedUserIds: [],
 };
 
+const websiteTabs = ['Overview', 'Domains', 'Publishing', 'Backups', 'Hosting', 'Analytics'];
+
 function createWebsiteId(name) {
   const safeName = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   return safeName || `website-${Date.now()}`;
@@ -105,6 +107,7 @@ export default function PortalsAdminWebsites() {
   const [portalData, setPortalData] = useState(initialPortalData);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState(initialPortalData.websites[0]?.id ?? null);
   const [mode, setMode] = useState('view');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [form, setForm] = useState(emptyWebsiteForm);
 
   const websites = portalData.websites ?? [];
@@ -133,12 +136,14 @@ export default function PortalsAdminWebsites() {
   function startCreate() {
     setMode('create');
     setSelectedWebsiteId(null);
+    setActiveTab('Overview');
     setForm({ ...emptyWebsiteForm, ownerUserId: portalUsers[0]?.id ?? '' });
   }
 
-  function startEdit(website) {
+  function startManage(website) {
     setMode('edit');
     setSelectedWebsiteId(website.id);
+    setActiveTab('Overview');
     setForm({
       name: website.name ?? '',
       type: website.type ?? 'Managed Website',
@@ -166,6 +171,7 @@ export default function PortalsAdminWebsites() {
     setMode('view');
     setForm(emptyWebsiteForm);
     setSelectedWebsiteId(websites[0]?.id ?? null);
+    setActiveTab('Overview');
   }
 
   function updateForm(field, value) {
@@ -261,6 +267,78 @@ export default function PortalsAdminWebsites() {
     setSelectedWebsiteId(remainingWebsites[0]?.id ?? null);
   }
 
+  function renderTabContent(website) {
+    if (!website) return null;
+
+    if (activeTab === 'Domains') {
+      return (
+        <ul>
+          <li><strong>Primary Domain:</strong> {website.domain}</li>
+          <li><strong>Additional Domains:</strong> {website.additionalDomains?.length ? website.additionalDomains.join(', ') : 'None'}</li>
+          <li><strong>SSL Status:</strong> {website.sslStatus ?? 'Pending'}</li>
+          <li><strong>Live URL:</strong> {website.url}</li>
+        </ul>
+      );
+    }
+
+    if (activeTab === 'Publishing') {
+      return (
+        <ul>
+          <li><strong>Publish Settings:</strong> {website.publishMode}</li>
+          <li><strong>Last Publish:</strong> {website.lastPublish ?? 'Not published through portal yet'}</li>
+          <li><strong>Last Editor:</strong> {website.lastEditor ?? 'Unknown'}</li>
+          <li><strong>Portal Status:</strong> {getPortalStatus(website)}</li>
+        </ul>
+      );
+    }
+
+    if (activeTab === 'Backups') {
+      return (
+        <ul>
+          <li><strong>Backup Settings:</strong> {website.backup?.enabled ? `Enabled · ${website.backup?.retentionHours ?? 48} hour retention` : 'Disabled'}</li>
+          <li><strong>Restore Backup:</strong> {website.backup?.status ?? 'No active backup'}</li>
+          <li><strong>Last Backup:</strong> {website.backup?.lastCreatedAt || 'Not created yet'}</li>
+          <li><strong>Backup Expiry:</strong> {website.backup?.expiresAt || 'No active expiry'}</li>
+        </ul>
+      );
+    }
+
+    if (activeTab === 'Hosting') {
+      return (
+        <ul>
+          <li><strong>Website Status:</strong> {getHostingStatus(website)}</li>
+          <li><strong>Deployment:</strong> {website.deployment?.provider ?? 'VPS / Nginx'}</li>
+          <li><strong>VPS Path:</strong> {website.deployment?.vpsPath ?? 'Path not set'}</li>
+          <li><strong>Build Command:</strong> {website.deployment?.buildCommand ?? 'Not set'}</li>
+          <li><strong>Last Build:</strong> {website.deployment?.lastBuild ?? 'Not built through portal yet'}</li>
+        </ul>
+      );
+    }
+
+    if (activeTab === 'Analytics') {
+      return (
+        <ul>
+          <li><strong>Analytics:</strong> {website.analytics?.enabled ? 'Enabled' : 'Disabled'}</li>
+          <li><strong>Monthly Views:</strong> {website.analytics?.monthlyViews ?? 0}</li>
+          <li><strong>Monthly Visitors:</strong> {website.analytics?.monthlyVisitors ?? 0}</li>
+          <li><strong>Storage Usage:</strong> {formatStorage(website)}</li>
+          <li><strong>Last Checked:</strong> {website.analytics?.lastChecked ?? 'Not connected yet'}</li>
+        </ul>
+      );
+    }
+
+    return (
+      <ul>
+        <li><strong>Owner:</strong> {getOwnerName(website, portalUsers)}</li>
+        <li><strong>Primary Domain:</strong> {website.domain}</li>
+        <li><strong>Website Status:</strong> {getHostingStatus(website)}</li>
+        <li><strong>Portal Status:</strong> {getPortalStatus(website)}</li>
+        <li><strong>Storage Limit:</strong> {formatStorage(website)}</li>
+        <li><strong>Assigned Users:</strong> {selectedAssignedUsers.length ? selectedAssignedUsers.map((assignedUser) => assignedUser.name).join(', ') : 'None'}</li>
+      </ul>
+    );
+  }
+
   return (
     <main className="portals-shell portals-dashboard-page">
       <section className="portal-dashboard-frame" aria-label="Portal websites management">
@@ -268,7 +346,8 @@ export default function PortalsAdminWebsites() {
           <img src={KsjDigitalLogo} alt="KSJ Digital" />
           <span>Management</span>
           <nav>
-            <a href="/portals/admin">Client Management</a>
+            <a href="/portals/admin">Admin Home</a>
+            <a href="/portals/admin/users">Client Management</a>
             <a href="/portals/admin/websites" className="active">Websites</a>
             <a href="/portals/admin/publish-requests">Publish Requests</a>
             <a href="/portals/dashboard">Client View</a>
@@ -291,7 +370,7 @@ export default function PortalsAdminWebsites() {
 
           {(mode === 'create' || mode === 'edit') && (
             <form className="portal-management-card" onSubmit={saveWebsite}>
-              <div className="portal-section-title-row"><strong>{mode === 'create' ? 'Create Website' : `Edit ${selectedWebsite?.name ?? 'Website'}`}</strong><span>Website Settings</span></div>
+              <div className="portal-section-title-row"><strong>{mode === 'create' ? 'Create Website' : `Manage ${selectedWebsite?.name ?? 'Website'}`}</strong><span>Website Settings</span></div>
 
               <div className="portal-form-grid">
                 <label>Website Name<input value={form.name} onChange={(event) => updateForm('name', event.target.value)} required /></label>
@@ -312,18 +391,20 @@ export default function PortalsAdminWebsites() {
               <label className="portal-full-field">Additional Domains<textarea value={form.additionalDomainsText} onChange={(event) => updateForm('additionalDomainsText', event.target.value)} rows="3" placeholder="www.example.co.uk" /></label>
               <label className="portal-full-field">Description<textarea value={form.description} onChange={(event) => updateForm('description', event.target.value)} rows="3" /></label>
 
-              <div className="portal-management-card compact">
-                <div className="portal-section-title-row"><strong>Feature Settings</strong><span>Portal Controls</span></div>
-                <div className="portal-checkbox-list">
-                  <label><input type="checkbox" checked={form.backupEnabled} onChange={(event) => updateForm('backupEnabled', event.target.checked)} /><span>Enable 48-hour restore backups</span></label>
-                  <label><input type="checkbox" checked={form.analyticsEnabled} onChange={(event) => updateForm('analyticsEnabled', event.target.checked)} /><span>Enable analytics tracking</span></label>
+              <div className="portal-grid-two">
+                <div className="portal-management-card compact">
+                  <div className="portal-section-title-row"><strong>Feature Settings</strong><span>Portal Controls</span></div>
+                  <div className="portal-checkbox-list">
+                    <label><input type="checkbox" checked={form.backupEnabled} onChange={(event) => updateForm('backupEnabled', event.target.checked)} /><span>Enable 48-hour restore backups</span></label>
+                    <label><input type="checkbox" checked={form.analyticsEnabled} onChange={(event) => updateForm('analyticsEnabled', event.target.checked)} /><span>Enable analytics tracking</span></label>
+                  </div>
                 </div>
-              </div>
 
-              <div className="portal-management-card compact">
-                <div className="portal-section-title-row"><strong>Website Access</strong><span>{form.assignedUserIds.length} Assigned</span></div>
-                <div className="portal-checkbox-list">
-                  {portalUsers.map((portalUser) => <label key={portalUser.id}><input type="checkbox" checked={form.assignedUserIds.includes(portalUser.id)} onChange={() => toggleAssignedUser(portalUser.id)} /><span>{portalUser.name} - {portalUser.role}</span></label>)}
+                <div className="portal-management-card compact">
+                  <div className="portal-section-title-row"><strong>Website Access</strong><span>{form.assignedUserIds.length} Assigned</span></div>
+                  <div className="portal-checkbox-list">
+                    {portalUsers.map((portalUser) => <label key={portalUser.id}><input type="checkbox" checked={form.assignedUserIds.includes(portalUser.id)} onChange={() => toggleAssignedUser(portalUser.id)} /><span>{portalUser.name} - {portalUser.role}</span></label>)}
+                  </div>
                 </div>
               </div>
 
@@ -345,18 +426,12 @@ export default function PortalsAdminWebsites() {
                       <li>Owner: {getOwnerName(website, portalUsers)}</li>
                       <li>SSL: {website.sslStatus ?? 'Pending'}</li>
                       <li>Portal Access: {portalStatus}</li>
-                      <li>Storage: {formatStorage(website)}</li>
                       <li>{liveAssignedUsers.length} Assigned User(s)</li>
                     </ul>
                   </div>
                   <div className="portal-inline-actions">
-                    <button type="button" onClick={() => setSelectedWebsiteId(website.id)}>View</button>
-                    <button type="button" onClick={() => startEdit(website)}>Settings</button>
-                    <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Live')}>Go Live</button>
-                    <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Maintenance')}>Maintenance</button>
-                    <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Offline')}>Take Offline</button>
-                    <button type="button" onClick={() => setWebsitePortalStatus(website.id, portalStatus === 'Active' ? 'Suspended' : 'Active')}>{portalStatus === 'Active' ? 'Suspend Portal' : 'Activate Portal'}</button>
-                    <button type="button" onClick={() => removeWebsite(website.id)}>Remove</button>
+                    <button type="button" onClick={() => { setSelectedWebsiteId(website.id); setMode('view'); setActiveTab('Overview'); }}>View</button>
+                    <button type="button" onClick={() => startManage(website)}>Manage</button>
                   </div>
                 </article>
               );
@@ -365,31 +440,30 @@ export default function PortalsAdminWebsites() {
 
           {selectedWebsite && (
             <aside className="portal-management-card">
-              <div className="portal-section-title-row"><strong>{selectedWebsite.name} Settings</strong><span>{getHostingStatus(selectedWebsite)}</span></div>
+              <div className="portal-section-title-row"><strong>{selectedWebsite.name} Control Panel</strong><span>{getHostingStatus(selectedWebsite)}</span></div>
               <p>{selectedWebsite.description}</p>
+
               <div className="portal-admin-stats">
                 <article className="portal-help-card"><p className="eyebrow">Owner</p><h3>{getOwnerName(selectedWebsite, portalUsers)}</h3></article>
                 <article className="portal-help-card"><p className="eyebrow">Storage</p><h3>{getStoragePercent(selectedWebsite)}%</h3></article>
                 <article className="portal-help-card"><p className="eyebrow">SSL</p><h3>{selectedWebsite.sslStatus ?? 'Pending'}</h3></article>
                 <article className="portal-help-card"><p className="eyebrow">Backup</p><h3>{selectedWebsite.backup?.enabled ? `${selectedWebsite.backup?.retentionHours ?? 48}h` : 'Off'}</h3></article>
               </div>
-              <ul>
-                <li><strong>Primary Domain:</strong> {selectedWebsite.domain}</li>
-                <li><strong>Additional Domains:</strong> {selectedWebsite.additionalDomains?.length ? selectedWebsite.additionalDomains.join(', ') : 'None'}</li>
-                <li><strong>Website Status:</strong> {getHostingStatus(selectedWebsite)}</li>
-                <li><strong>Portal Status:</strong> {getPortalStatus(selectedWebsite)}</li>
-                <li><strong>Publish Settings:</strong> {selectedWebsite.publishMode}</li>
-                <li><strong>Storage Limit:</strong> {formatStorage(selectedWebsite)}</li>
-                <li><strong>Analytics Settings:</strong> {selectedWebsite.analytics?.enabled ? 'Enabled' : 'Disabled'} · {selectedWebsite.analytics?.monthlyVisitors ?? 0} visitors this month</li>
-                <li><strong>Backup Settings:</strong> {selectedWebsite.backup?.enabled ? `Enabled · ${selectedWebsite.backup?.retentionHours ?? 48} hour retention` : 'Disabled'}</li>
-                <li><strong>48 Hour Backup:</strong> {selectedWebsite.backup?.status ?? 'No active backup'}{selectedWebsite.backup?.expiresAt ? ` · Expires ${selectedWebsite.backup.expiresAt}` : ''}</li>
-                <li><strong>Deployment:</strong> {selectedWebsite.deployment?.provider ?? 'VPS / Nginx'} · {selectedWebsite.deployment?.vpsPath ?? 'Path not set'}</li>
-                <li><strong>Build Command:</strong> {selectedWebsite.deployment?.buildCommand ?? 'Not set'}</li>
-                <li><strong>Last Build:</strong> {selectedWebsite.deployment?.lastBuild ?? 'Not built through portal yet'}</li>
-                <li><strong>Last Publish:</strong> {selectedWebsite.lastPublish ?? 'Not published through portal yet'}</li>
-                <li><strong>Last Editor:</strong> {selectedWebsite.lastEditor ?? 'Unknown'}</li>
-                <li><strong>Assigned Users:</strong> {selectedAssignedUsers.length ? selectedAssignedUsers.map((assignedUser) => assignedUser.name).join(', ') : 'None'}</li>
-              </ul>
+
+              <div className="portal-inline-actions">
+                {websiteTabs.map((tab) => <button type="button" key={tab} onClick={() => setActiveTab(tab)}>{tab}</button>)}
+              </div>
+
+              {renderTabContent(selectedWebsite)}
+
+              <div className="portal-inline-actions">
+                <button type="button" onClick={() => startManage(selectedWebsite)}>Manage Settings</button>
+                <button type="button" onClick={() => setWebsiteHostingStatus(selectedWebsite.id, 'Live')}>Go Live</button>
+                <button type="button" onClick={() => setWebsiteHostingStatus(selectedWebsite.id, 'Maintenance')}>Maintenance</button>
+                <button type="button" onClick={() => setWebsiteHostingStatus(selectedWebsite.id, 'Offline')}>Take Offline</button>
+                <button type="button" onClick={() => setWebsitePortalStatus(selectedWebsite.id, getPortalStatus(selectedWebsite) === 'Active' ? 'Suspended' : 'Active')}>{getPortalStatus(selectedWebsite) === 'Active' ? 'Suspend Portal' : 'Activate Portal'}</button>
+                <button type="button" onClick={() => removeWebsite(selectedWebsite.id)}>Remove Website</button>
+              </div>
             </aside>
           )}
         </div>
