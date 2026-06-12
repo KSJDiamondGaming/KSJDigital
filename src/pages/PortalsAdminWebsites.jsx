@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
-import { getPortalUsersByWebsite, portalUsers } from '../portals/data/users';
-import { portalWebsites } from '../portals/data/websites';
+import {
+  getPortalData,
+  getPortalUsersByWebsite,
+  savePortalData,
+} from '../portals/data/portalManager';
 
 const emptyWebsiteForm = {
   name: '',
@@ -29,11 +32,15 @@ function createWebsiteId(name) {
 export default function PortalsAdminWebsites() {
   const session = getStoredSession();
   const user = session?.user;
+  const initialPortalData = getPortalData();
 
-  const [websites, setWebsites] = useState(portalWebsites);
-  const [selectedWebsiteId, setSelectedWebsiteId] = useState(portalWebsites[0]?.id ?? null);
+  const [portalData, setPortalData] = useState(initialPortalData);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState(initialPortalData.websites[0]?.id ?? null);
   const [mode, setMode] = useState('view');
   const [form, setForm] = useState(emptyWebsiteForm);
+
+  const websites = portalData.websites ?? [];
+  const portalUsers = portalData.users ?? [];
 
   const selectedWebsite = useMemo(
     () => websites.find((website) => website.id === selectedWebsiteId) ?? null,
@@ -43,6 +50,12 @@ export default function PortalsAdminWebsites() {
   const selectedAssignedUsers = selectedWebsite
     ? portalUsers.filter((portalUser) => selectedWebsite.assignedUserIds?.includes(portalUser.id))
     : [];
+
+  function commitPortalData(nextData) {
+    const savedData = savePortalData(nextData);
+    setPortalData(savedData);
+    return savedData;
+  }
 
   function handleLogout() {
     clearSession();
@@ -92,6 +105,24 @@ export default function PortalsAdminWebsites() {
     });
   }
 
+  function syncUserWebsiteAccess(users, websiteId, assignedUserIds) {
+    return users.map((portalUser) => {
+      const websiteIds = portalUser.websiteIds ?? [];
+      const shouldHaveAccess = assignedUserIds.includes(portalUser.id);
+      const alreadyHasAccess = websiteIds.includes(websiteId);
+
+      if (shouldHaveAccess && !alreadyHasAccess) {
+        return { ...portalUser, websiteIds: [...websiteIds, websiteId] };
+      }
+
+      if (!shouldHaveAccess && alreadyHasAccess) {
+        return { ...portalUser, websiteIds: websiteIds.filter((id) => id !== websiteId) };
+      }
+
+      return portalUser;
+    });
+  }
+
   function saveWebsite(event) {
     event.preventDefault();
 
@@ -110,15 +141,20 @@ export default function PortalsAdminWebsites() {
         domain: cleanedDomain,
         url: cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`,
       };
+      const nextData = {
+        ...portalData,
+        websites: [...websites, newWebsite],
+        users: syncUserWebsiteAccess(portalUsers, id, form.assignedUserIds),
+      };
 
-      setWebsites((current) => [...current, newWebsite]);
+      commitPortalData(nextData);
       setSelectedWebsiteId(id);
       setMode('view');
       setForm(emptyWebsiteForm);
       return;
     }
 
-    setWebsites((current) => current.map((website) => {
+    const nextWebsites = websites.map((website) => {
       if (website.id !== selectedWebsiteId) return website;
 
       return {
@@ -128,26 +164,44 @@ export default function PortalsAdminWebsites() {
         domain: cleanedDomain,
         url: cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`,
       };
-    }));
+    });
+
+    commitPortalData({
+      ...portalData,
+      websites: nextWebsites,
+      users: syncUserWebsiteAccess(portalUsers, selectedWebsiteId, form.assignedUserIds),
+    });
 
     setMode('view');
     setForm(emptyWebsiteForm);
   }
 
   function disableWebsite(websiteId) {
-    setWebsites((current) => current.map((website) => (
-      website.id === websiteId ? { ...website, status: 'Suspended' } : website
-    )));
+    commitPortalData({
+      ...portalData,
+      websites: websites.map((website) => (
+        website.id === websiteId ? { ...website, status: 'Suspended' } : website
+      )),
+    });
   }
 
   function deleteWebsite(websiteId) {
     const website = websites.find((item) => item.id === websiteId);
-    const confirmed = window.confirm(`Delete ${website?.name ?? 'this website'} from the portal list? This only affects the current frontend demo state.`);
+    const confirmed = window.confirm(`Delete ${website?.name ?? 'this website'} from the portal list? This will update the central portal JSON demo store.`);
 
     if (!confirmed) return;
 
     const remainingWebsites = websites.filter((item) => item.id !== websiteId);
-    setWebsites(remainingWebsites);
+    const nextUsers = portalUsers.map((portalUser) => ({
+      ...portalUser,
+      websiteIds: portalUser.websiteIds?.filter((id) => id !== websiteId) ?? [],
+    }));
+
+    commitPortalData({
+      ...portalData,
+      websites: remainingWebsites,
+      users: nextUsers,
+    });
     setSelectedWebsiteId(remainingWebsites[0]?.id ?? null);
   }
 
