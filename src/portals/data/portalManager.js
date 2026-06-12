@@ -102,3 +102,7 @@ export function getDraftsByWebsite(websiteId) {
 export function getPublishRequestsByWebsite(websiteId) {
   return getPortalPublishRequests().filter((request) => request.websiteId === websiteId);
 }
+
+export function getWebsiteRegistry() {
+  return getPortalData().websiteRegistry ?? {};
+}
