@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
-import { getPortalPublishRequests, getPortalWebsiteById } from '../portals/data/portalManager';
+import {
+  getPortalData,
+  getPortalDrafts,
+  getPortalWebsiteById,
+  savePortalData,
+} from '../portals/data/portalManager';
 
 const workflowStatuses = ['Pending', 'Approved', 'Rejected', 'Published'];
 
@@ -11,22 +16,144 @@ function normaliseStatus(status) {
   return status ?? 'Pending';
 }
 
+function getDraftForRequest(request, drafts) {
+  if (!request) return null;
+  if (request.draftId) return drafts.find((draft) => draft.id === request.draftId) ?? null;
+  return drafts.find((draft) => draft.websiteId === request.websiteId) ?? null;
+}
+
+function createActivity(type, label, actor, target) {
+  return {
+    id: `activity-${Date.now()}`,
+    type,
+    label,
+    actor,
+    target,
+    timestamp: 'Just now',
+  };
+}
+
 export default function PortalsPublishRequests() {
   const session = getStoredSession();
-  const portalPublishRequests = getPortalPublishRequests();
+  const initialPortalData = getPortalData();
+  const [portalData, setPortalData] = useState(initialPortalData);
   const [activeStatus, setActiveStatus] = useState('Pending');
-  const [selectedRequestId, setSelectedRequestId] = useState(portalPublishRequests[0]?.id ?? null);
+  const [selectedRequestId, setSelectedRequestId] = useState(initialPortalData.publishRequests?.[0]?.id ?? null);
+  const [reviewNote, setReviewNote] = useState('');
 
+  const portalPublishRequests = portalData.publishRequests ?? [];
+  const portalDrafts = getPortalDrafts();
   const filteredRequests = portalPublishRequests.filter((request) => normaliseStatus(request.status) === activeStatus);
+
   const selectedRequest = useMemo(
     () => portalPublishRequests.find((request) => request.id === selectedRequestId) ?? portalPublishRequests[0],
     [portalPublishRequests, selectedRequestId],
   );
   const selectedWebsite = selectedRequest ? getPortalWebsiteById(selectedRequest.websiteId) : null;
+  const selectedDraft = getDraftForRequest(selectedRequest, portalDrafts);
+
+  function commitPortalData(nextData) {
+    const savedData = savePortalData(nextData);
+    setPortalData(savedData);
+    return savedData;
+  }
 
   function handleLogout() {
     clearSession();
     window.location.href = '/portals';
+  }
+
+  function updateRequestStatus(status) {
+    if (!selectedRequest) return;
+
+    const actor = session?.user?.name ?? 'KSJ Digital Admin';
+    const nextRequest = {
+      ...selectedRequest,
+      status,
+      updatedAt: 'Just now',
+      reviewedBy: actor,
+      reviewNote: reviewNote.trim() || selectedRequest.reviewNote || '',
+      history: [
+        ...(selectedRequest.history ?? []),
+        {
+          id: `history-${Date.now()}`,
+          status,
+          actor,
+          note: reviewNote.trim() || `${status} selected`,
+          timestamp: 'Just now',
+        },
+      ],
+    };
+
+    const nextActivity = createActivity('publish.updated', `Publish request ${status.toLowerCase()}`, actor, selectedRequest.title);
+
+    commitPortalData({
+      ...portalData,
+      publishRequests: portalPublishRequests.map((request) => request.id === selectedRequest.id ? nextRequest : request),
+      activityLogs: [nextActivity, ...(portalData.activityLogs ?? [])],
+    });
+    setActiveStatus(normaliseStatus(status));
+    setReviewNote('');
+  }
+
+  function publishRequest() {
+    if (!selectedRequest) return;
+
+    const actor = session?.user?.name ?? 'KSJ Digital Admin';
+    const backupId = `backup-${selectedRequest.websiteId}-${Date.now()}`;
+    const nextBackup = {
+      id: backupId,
+      websiteId: selectedRequest.websiteId,
+      status: 'Active',
+      createdAt: 'Just now',
+      expiresAt: '48 hours from publish',
+      createdBy: actor,
+      reason: `Safety backup before publishing ${selectedRequest.title}`,
+      restoreStatus: 'Available',
+    };
+
+    const nextActivity = createActivity('publish.published', 'Publish request completed and backup created', actor, selectedRequest.title);
+
+    commitPortalData({
+      ...portalData,
+      publishRequests: portalPublishRequests.map((request) => request.id === selectedRequest.id ? {
+        ...request,
+        status: 'Published',
+        updatedAt: 'Just now',
+        publishedBy: actor,
+        reviewNote: reviewNote.trim() || request.reviewNote || '',
+        history: [
+          ...(request.history ?? []),
+          { id: `history-${Date.now()}`, status: 'Published', actor, note: 'Published with 48-hour backup created', timestamp: 'Just now' },
+        ],
+      } : request),
+      websites: (portalData.websites ?? []).map((website) => website.id === selectedRequest.websiteId ? {
+        ...website,
+        lastPublish: 'Just now',
+        lastEditor: actor,
+        backup: {
+          ...(website.backup ?? {}),
+          enabled: true,
+          retentionHours: 48,
+          status: 'Active restore backup available',
+          lastCreatedAt: 'Just now',
+          expiresAt: '48 hours from publish',
+        },
+      } : website),
+      backups: [nextBackup, ...(portalData.backups ?? [])],
+      activityLogs: [nextActivity, ...(portalData.activityLogs ?? [])],
+      notifications: [
+        {
+          id: `notice-${Date.now()}`,
+          type: 'backup',
+          level: 'success',
+          message: `${selectedWebsite?.name ?? selectedRequest.websiteId} has a 48-hour restore backup available.`,
+        },
+        ...(portalData.notifications ?? []),
+      ],
+    });
+    setActiveStatus('Published');
+    setReviewNote('');
   }
 
   return (
@@ -64,6 +191,16 @@ export default function PortalsPublishRequests() {
             ))}
           </div>
 
+          <section className="portal-editor-panel">
+            <div className="portal-editor-header">
+              <div>
+                <p className="eyebrow">48 Hour Backup Protection</p>
+                <h2>Safe Publishing Workflow</h2>
+                <p>Publishing creates a temporary restore backup before the live website is replaced. Clients should be warned that restore backups expire after 48 hours.</p>
+              </div>
+            </div>
+          </section>
+
           <div className="portal-inline-actions">
             {workflowStatuses.map((status) => <button type="button" key={status} onClick={() => setActiveStatus(status)}>{status}</button>)}
           </div>
@@ -80,6 +217,7 @@ export default function PortalsPublishRequests() {
               <div className="portal-section-list">
                 {(filteredRequests.length ? filteredRequests : portalPublishRequests).map((request) => {
                   const website = getPortalWebsiteById(request.websiteId);
+                  const linkedDraft = getDraftForRequest(request, portalDrafts);
                   return (
                     <article key={request.id}>
                       <div>
@@ -87,6 +225,7 @@ export default function PortalsPublishRequests() {
                         <p>{request.summary}</p>
                         <ul>
                           <li>{website?.name ?? request.websiteId}</li>
+                          <li>Linked Draft: {linkedDraft?.section ?? 'Not linked'}</li>
                           <li>Requested by {request.requestedBy}</li>
                           <li>{request.updatedAt}</li>
                         </ul>
@@ -102,22 +241,51 @@ export default function PortalsPublishRequests() {
               <p className="eyebrow">Request Details</p>
               <h3>{selectedRequest?.title ?? 'No request selected'}</h3>
               <p>{selectedRequest?.summary ?? 'Select a request to review it.'}</p>
+
               {selectedRequest && (
-                <div className="portal-detail-group">
-                  <strong>Workflow</strong>
-                  <small>Website: {selectedWebsite?.name ?? selectedRequest.websiteId}</small>
-                  <small>Status: {normaliseStatus(selectedRequest.status)}</small>
-                  <small>Submitted by: {selectedRequest.requestedBy}</small>
-                  <small>Change summary: {selectedRequest.summary}</small>
-                  <small>Draft link: Coming next</small>
-                </div>
+                <>
+                  <div className="portal-detail-group">
+                    <strong>Workflow</strong>
+                    <small>Website: {selectedWebsite?.name ?? selectedRequest.websiteId}</small>
+                    <small>Status: {normaliseStatus(selectedRequest.status)}</small>
+                    <small>Submitted by: {selectedRequest.requestedBy}</small>
+                    <small>Change summary: {selectedRequest.summary}</small>
+                    <small>Linked draft: {selectedDraft?.section ?? 'No draft linked yet'}</small>
+                  </div>
+
+                  <div className="portal-grid-two">
+                    <div className="portal-management-card compact">
+                      <div className="portal-section-title-row"><strong>Current Live</strong><span>Before Publish</span></div>
+                      <p>{selectedDraft?.currentVersion ?? 'Current live snapshot will be connected with the content engine.'}</p>
+                    </div>
+                    <div className="portal-management-card compact">
+                      <div className="portal-section-title-row"><strong>Requested Changes</strong><span>Draft</span></div>
+                      <p>{selectedDraft?.draftVersion ?? selectedRequest.summary}</p>
+                    </div>
+                  </div>
+
+                  <div className="portal-admin-form">
+                    <label>
+                      Review Note
+                      <textarea value={reviewNote} onChange={(event) => setReviewNote(event.target.value)} rows="3" placeholder="Add an approval, rejection, or publish note..." />
+                    </label>
+                  </div>
+
+                  <div className="portal-detail-group">
+                    <strong>Change History</strong>
+                    {(selectedRequest.history ?? []).length ? selectedRequest.history.map((item) => (
+                      <small key={item.id}>{item.status} · {item.actor} · {item.note} · {item.timestamp}</small>
+                    )) : <small>No workflow history yet.</small>}
+                  </div>
+                </>
               )}
+
               <div className="portal-action-row portal-action-row-primary">
-                <button type="button">Approve</button>
-                <button type="button" className="portal-secondary-button">Reject</button>
+                <button type="button" onClick={() => updateRequestStatus('Approved')}>Approve</button>
+                <button type="button" className="portal-secondary-button" onClick={() => updateRequestStatus('Rejected')}>Reject</button>
               </div>
               <div className="portal-action-row portal-action-row-danger">
-                <button type="button" className="portal-warning-button">Publish</button>
+                <button type="button" className="portal-warning-button" onClick={publishRequest}>Publish</button>
               </div>
               <p className="portal-inline-notice">Publishing will create a 48-hour restore backup before the live copy is replaced.</p>
             </section>
