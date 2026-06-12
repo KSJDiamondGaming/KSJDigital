@@ -2,8 +2,10 @@ import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 import { getPortalData } from '../portals/data/portalManager';
 
-function getActiveBackups(websites) {
-  return websites.filter((website) => website.backup?.status && website.backup.status !== 'No active backup').length;
+function getActiveBackups(websites, backups) {
+  const websiteBackups = websites.filter((website) => website.backup?.status && website.backup.status !== 'No active backup').length;
+  const storedBackups = backups.filter((backup) => backup.status === 'Active').length;
+  return Math.max(websiteBackups, storedBackups);
 }
 
 export default function PortalsAdmin() {
@@ -13,6 +15,9 @@ export default function PortalsAdmin() {
   const portalWebsites = portalData.websites ?? [];
   const publishRequests = portalData.publishRequests ?? [];
   const supportTickets = portalData.supportTickets ?? [];
+  const backups = portalData.backups ?? [];
+  const activityLogs = portalData.activityLogs ?? [];
+  const notifications = portalData.notifications ?? [];
   const user = session?.user ?? portalUsers[0];
 
   const adminStats = [
@@ -20,14 +25,7 @@ export default function PortalsAdmin() {
     { label: 'Websites', value: String(portalWebsites.length) },
     { label: 'Pending Publishes', value: String(publishRequests.filter((item) => ['Draft', 'Pending', 'Pending Review'].includes(item.status)).length) },
     { label: 'Open Tickets', value: String(supportTickets.filter((item) => item.status !== 'Closed').length) },
-    { label: 'Active Backups', value: String(getActiveBackups(portalWebsites)) },
-  ];
-
-  const recentActivity = [
-    'Website Management settings were updated',
-    'Central portal data store connected',
-    'Publish workflow awaiting backend integration',
-    'Support ticket system planned next',
+    { label: 'Active Backups', value: String(getActiveBackups(portalWebsites, backups)) },
   ];
 
   function handleLogout() {
@@ -70,6 +68,28 @@ export default function PortalsAdmin() {
             ))}
           </div>
 
+          {notifications.length > 0 && (
+            <section className="portal-editor-panel">
+              <div className="portal-editor-header">
+                <div>
+                  <p className="eyebrow">Notifications</p>
+                  <h2>Needs Attention</h2>
+                  <p>Important portal alerts across publishing, support, backups, and hosting.</p>
+                </div>
+              </div>
+              <div className="portal-section-list">
+                {notifications.map((notification) => (
+                  <article key={notification.id}>
+                    <div>
+                      <div className="portal-section-title-row"><strong>{notification.type}</strong><span>{notification.level}</span></div>
+                      <p>{notification.message}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
           <div className="portal-grid-two">
             <section className="portal-editor-panel">
               <div className="portal-editor-header">
@@ -91,7 +111,7 @@ export default function PortalsAdmin() {
               <p className="eyebrow">Recent Activity</p>
               <h3>Portal Timeline</h3>
               <div className="portal-activity-list">
-                {recentActivity.map((activity) => <small key={activity}>{activity}</small>)}
+                {(activityLogs.length ? activityLogs : []).map((activity) => <small key={activity.id}>{activity.label} · {activity.target} · {activity.timestamp}</small>)}
               </div>
             </section>
           </div>
