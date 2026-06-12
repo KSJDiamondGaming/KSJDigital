@@ -2,7 +2,6 @@ import Header from './components/Header';
 import Home from './pages/Home';
 import Portals from './pages/Portals';
 import PortalsAccount from './pages/PortalsAccount';
-import PortalsAdmin from './pages/PortalsAdmin';
 import PortalsAdminSettings from './pages/PortalsAdminSettings';
 import PortalsAdminUsers from './pages/PortalsAdminUsers';
 import PortalsAdminWebsites from './pages/PortalsAdminWebsites';
@@ -32,11 +31,10 @@ export default function App() {
       return null;
     }
 
-    if (path === '/portals/admin/users') return <PortalsAdminUsers />;
     if (path === '/portals/admin/websites') return <PortalsAdminWebsites />;
     if (path === '/portals/admin/settings') return <PortalsAdminSettings />;
 
-    return <PortalsAdmin />;
+    return <PortalsAdminUsers />;
   }
 
   if (isPortalDashboard || isPortalDrafts || isPortalPublishRequests || isPortalWebsiteEditor || path === '/portals/support' || path === '/portals/account') {
