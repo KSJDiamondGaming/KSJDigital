@@ -7,12 +7,20 @@ const emptyWebsiteForm = {
   name: '',
   type: 'Managed Website',
   domain: '',
+  additionalDomainsText: '',
   hostingStatus: 'Live',
   portalStatus: 'Active',
+  sslStatus: 'Pending',
   access: 'Website Management',
   publishMode: 'Approval Required',
   plan: 'Managed Website',
   ownerUserId: '',
+  storageLimitMb: 2048,
+  analyticsEnabled: false,
+  backupEnabled: true,
+  backupRetentionHours: 48,
+  vpsPath: '',
+  buildCommand: 'npm run build',
   description: '',
   assignedUserIds: [],
 };
@@ -28,6 +36,14 @@ function getHostingStatus(website) {
 
 function getPortalStatus(website) {
   return website.portalStatus ?? 'Active';
+}
+
+function getAdditionalDomainsText(website) {
+  return (website.additionalDomains ?? []).join('\n');
+}
+
+function parseAdditionalDomains(value) {
+  return value.split('\n').map((domain) => domain.trim()).filter(Boolean);
 }
 
 function formatStorage(website) {
@@ -46,6 +62,39 @@ function getStoragePercent(website) {
 
 function getOwnerName(website, users) {
   return users.find((portalUser) => portalUser.id === website.ownerUserId)?.name ?? 'Unassigned';
+}
+
+function createWebsitePayload(form, currentWebsite, editorName) {
+  return {
+    ...currentWebsite,
+    ...form,
+    additionalDomains: parseAdditionalDomains(form.additionalDomainsText),
+    status: form.hostingStatus,
+    storageLimitMb: Number(form.storageLimitMb) || 0,
+    analytics: {
+      ...(currentWebsite?.analytics ?? {}),
+      enabled: Boolean(form.analyticsEnabled),
+      monthlyViews: currentWebsite?.analytics?.monthlyViews ?? 0,
+      monthlyVisitors: currentWebsite?.analytics?.monthlyVisitors ?? 0,
+      lastChecked: currentWebsite?.analytics?.lastChecked ?? 'Not connected yet',
+    },
+    backup: {
+      ...(currentWebsite?.backup ?? {}),
+      enabled: Boolean(form.backupEnabled),
+      retentionHours: Number(form.backupRetentionHours) || 48,
+      status: currentWebsite?.backup?.status ?? 'No active backup',
+      expiresAt: currentWebsite?.backup?.expiresAt ?? '',
+      lastCreatedAt: currentWebsite?.backup?.lastCreatedAt ?? '',
+    },
+    deployment: {
+      ...(currentWebsite?.deployment ?? {}),
+      provider: 'VPS / Nginx',
+      vpsPath: form.vpsPath,
+      buildCommand: form.buildCommand,
+      lastBuild: currentWebsite?.deployment?.lastBuild ?? 'Not built through portal yet',
+    },
+    lastEditor: editorName,
+  };
 }
 
 export default function PortalsAdminWebsites() {
@@ -94,12 +143,20 @@ export default function PortalsAdminWebsites() {
       name: website.name ?? '',
       type: website.type ?? 'Managed Website',
       domain: website.domain ?? '',
+      additionalDomainsText: getAdditionalDomainsText(website),
       hostingStatus: getHostingStatus(website),
       portalStatus: getPortalStatus(website),
+      sslStatus: website.sslStatus ?? 'Pending',
       access: website.access ?? 'Website Management',
       publishMode: website.publishMode ?? 'Approval Required',
       plan: website.plan ?? 'Managed Website',
       ownerUserId: website.ownerUserId ?? website.assignedUserIds?.[0] ?? '',
+      storageLimitMb: website.storageLimitMb ?? 2048,
+      analyticsEnabled: Boolean(website.analytics?.enabled),
+      backupEnabled: website.backup?.enabled !== false,
+      backupRetentionHours: website.backup?.retentionHours ?? 48,
+      vpsPath: website.deployment?.vpsPath ?? '',
+      buildCommand: website.deployment?.buildCommand ?? 'npm run build',
       description: website.description ?? '',
       assignedUserIds: website.assignedUserIds ?? [],
     });
@@ -141,25 +198,18 @@ export default function PortalsAdminWebsites() {
     if (!cleanedName || !cleanedDomain) return;
 
     const assignedUserIds = Array.from(new Set([...(form.assignedUserIds ?? []), form.ownerUserId].filter(Boolean)));
+    const editorName = user?.name ?? 'KSJ Digital Admin';
 
     if (mode === 'create') {
       const baseId = createWebsiteId(cleanedName);
       const id = websites.some((website) => website.id === baseId) ? `${baseId}-${Date.now()}` : baseId;
-      const newWebsite = {
-        id,
-        ...form,
-        assignedUserIds,
-        name: cleanedName,
-        domain: cleanedDomain,
-        status: form.hostingStatus,
-        url: cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`,
-        storageUsedMb: 0,
-        storageLimitMb: 2048,
-        analytics: { monthlyViews: 0, monthlyVisitors: 0, lastChecked: 'Not connected yet' },
-        backup: { status: 'No active backup', expiresAt: '', lastCreatedAt: '' },
-        lastPublish: 'Not published through portal yet',
-        lastEditor: user?.name ?? 'KSJ Digital Admin',
-      };
+      const newWebsite = createWebsitePayload({ ...form, assignedUserIds }, null, editorName);
+      newWebsite.id = id;
+      newWebsite.name = cleanedName;
+      newWebsite.domain = cleanedDomain;
+      newWebsite.url = cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`;
+      newWebsite.storageUsedMb = 0;
+      newWebsite.lastPublish = 'Not published through portal yet';
 
       commitPortalData({
         ...portalData,
@@ -174,15 +224,11 @@ export default function PortalsAdminWebsites() {
 
     const nextWebsites = websites.map((website) => {
       if (website.id !== selectedWebsiteId) return website;
-      return {
-        ...website,
-        ...form,
-        assignedUserIds,
-        name: cleanedName,
-        domain: cleanedDomain,
-        status: form.hostingStatus,
-        url: cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`,
-      };
+      const updatedWebsite = createWebsitePayload({ ...form, assignedUserIds }, website, editorName);
+      updatedWebsite.name = cleanedName;
+      updatedWebsite.domain = cleanedDomain;
+      updatedWebsite.url = cleanedDomain.startsWith('http') ? cleanedDomain : `https://${cleanedDomain}/`;
+      return updatedWebsite;
     });
 
     commitPortalData({ ...portalData, websites: nextWebsites, users: syncUserWebsiteAccess(portalUsers, selectedWebsiteId, assignedUserIds) });
@@ -245,20 +291,34 @@ export default function PortalsAdminWebsites() {
 
           {(mode === 'create' || mode === 'edit') && (
             <form className="portal-management-card" onSubmit={saveWebsite}>
-              <div className="portal-section-title-row"><strong>{mode === 'create' ? 'Create Website' : `Edit ${selectedWebsite?.name ?? 'Website'}`}</strong><span>{mode === 'create' ? 'New Website' : 'Editing'}</span></div>
+              <div className="portal-section-title-row"><strong>{mode === 'create' ? 'Create Website' : `Edit ${selectedWebsite?.name ?? 'Website'}`}</strong><span>Website Settings</span></div>
 
               <div className="portal-form-grid">
-                <label>Website Name<input value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="TwoToneTaj" required /></label>
-                <label>Domain<input value={form.domain} onChange={(event) => updateForm('domain', event.target.value)} placeholder="example.ksjdigital.co.uk" required /></label>
-                <label>Website Type<input value={form.type} onChange={(event) => updateForm('type', event.target.value)} placeholder="Creator Website" /></label>
-                <label>Plan<input value={form.plan} onChange={(event) => updateForm('plan', event.target.value)} placeholder="Managed Website" /></label>
+                <label>Website Name<input value={form.name} onChange={(event) => updateForm('name', event.target.value)} required /></label>
+                <label>Primary Domain<input value={form.domain} onChange={(event) => updateForm('domain', event.target.value)} required /></label>
+                <label>Website Type<input value={form.type} onChange={(event) => updateForm('type', event.target.value)} /></label>
+                <label>Plan<input value={form.plan} onChange={(event) => updateForm('plan', event.target.value)} /></label>
                 <label>Owner<select value={form.ownerUserId} onChange={(event) => updateForm('ownerUserId', event.target.value)}>{portalUsers.map((portalUser) => <option key={portalUser.id} value={portalUser.id}>{portalUser.name}</option>)}</select></label>
-                <label>Hosting Status<select value={form.hostingStatus} onChange={(event) => updateForm('hostingStatus', event.target.value)}><option>Live</option><option>Maintenance</option><option>Offline</option></select></label>
+                <label>SSL Status<select value={form.sslStatus} onChange={(event) => updateForm('sslStatus', event.target.value)}><option>Active</option><option>Pending</option><option>Expired</option><option>Not Configured</option></select></label>
+                <label>Website Status<select value={form.hostingStatus} onChange={(event) => updateForm('hostingStatus', event.target.value)}><option>Live</option><option>Maintenance</option><option>Offline</option></select></label>
                 <label>Portal Access<select value={form.portalStatus} onChange={(event) => updateForm('portalStatus', event.target.value)}><option>Active</option><option>Suspended</option><option>Archived</option></select></label>
-                <label>Publish Mode<select value={form.publishMode} onChange={(event) => updateForm('publishMode', event.target.value)}><option>Approval Required</option><option>Owner Controlled</option><option>Direct Publish</option></select></label>
+                <label>Publish Settings<select value={form.publishMode} onChange={(event) => updateForm('publishMode', event.target.value)}><option>Approval Required</option><option>Owner Controlled</option><option>Direct Publish</option></select></label>
+                <label>Storage Limit MB<input type="number" value={form.storageLimitMb} onChange={(event) => updateForm('storageLimitMb', event.target.value)} /></label>
+                <label>Backup Retention Hours<input type="number" value={form.backupRetentionHours} onChange={(event) => updateForm('backupRetentionHours', event.target.value)} /></label>
+                <label>VPS Path<input value={form.vpsPath} onChange={(event) => updateForm('vpsPath', event.target.value)} /></label>
+                <label>Build Command<input value={form.buildCommand} onChange={(event) => updateForm('buildCommand', event.target.value)} /></label>
               </div>
 
-              <label className="portal-full-field">Description<textarea value={form.description} onChange={(event) => updateForm('description', event.target.value)} rows="3" placeholder="Short internal website description" /></label>
+              <label className="portal-full-field">Additional Domains<textarea value={form.additionalDomainsText} onChange={(event) => updateForm('additionalDomainsText', event.target.value)} rows="3" placeholder="www.example.co.uk" /></label>
+              <label className="portal-full-field">Description<textarea value={form.description} onChange={(event) => updateForm('description', event.target.value)} rows="3" /></label>
+
+              <div className="portal-management-card compact">
+                <div className="portal-section-title-row"><strong>Feature Settings</strong><span>Portal Controls</span></div>
+                <div className="portal-checkbox-list">
+                  <label><input type="checkbox" checked={form.backupEnabled} onChange={(event) => updateForm('backupEnabled', event.target.checked)} /><span>Enable 48-hour restore backups</span></label>
+                  <label><input type="checkbox" checked={form.analyticsEnabled} onChange={(event) => updateForm('analyticsEnabled', event.target.checked)} /><span>Enable analytics tracking</span></label>
+                </div>
+              </div>
 
               <div className="portal-management-card compact">
                 <div className="portal-section-title-row"><strong>Website Access</strong><span>{form.assignedUserIds.length} Assigned</span></div>
@@ -267,7 +327,7 @@ export default function PortalsAdminWebsites() {
                 </div>
               </div>
 
-              <div className="portal-inline-actions"><button type="submit">{mode === 'create' ? 'Create Website' : 'Save Changes'}</button><button type="button" onClick={cancelForm}>Cancel</button></div>
+              <div className="portal-inline-actions"><button type="submit">Save Website Settings</button><button type="button" onClick={cancelForm}>Cancel</button></div>
             </form>
           )}
 
@@ -276,7 +336,6 @@ export default function PortalsAdminWebsites() {
               const liveAssignedUsers = portalUsers.filter((portalUser) => website.assignedUserIds?.includes(portalUser.id));
               const hostingStatus = getHostingStatus(website);
               const portalStatus = getPortalStatus(website);
-
               return (
                 <article key={website.id}>
                   <div>
@@ -284,6 +343,7 @@ export default function PortalsAdminWebsites() {
                     <p>{website.domain}</p>
                     <ul>
                       <li>Owner: {getOwnerName(website, portalUsers)}</li>
+                      <li>SSL: {website.sslStatus ?? 'Pending'}</li>
                       <li>Portal Access: {portalStatus}</li>
                       <li>Storage: {formatStorage(website)}</li>
                       <li>{liveAssignedUsers.length} Assigned User(s)</li>
@@ -291,7 +351,7 @@ export default function PortalsAdminWebsites() {
                   </div>
                   <div className="portal-inline-actions">
                     <button type="button" onClick={() => setSelectedWebsiteId(website.id)}>View</button>
-                    <button type="button" onClick={() => startEdit(website)}>Edit</button>
+                    <button type="button" onClick={() => startEdit(website)}>Settings</button>
                     <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Live')}>Go Live</button>
                     <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Maintenance')}>Maintenance</button>
                     <button type="button" onClick={() => setWebsiteHostingStatus(website.id, 'Offline')}>Take Offline</button>
@@ -305,22 +365,27 @@ export default function PortalsAdminWebsites() {
 
           {selectedWebsite && (
             <aside className="portal-management-card">
-              <div className="portal-section-title-row"><strong>{selectedWebsite.name} Details</strong><span>{getHostingStatus(selectedWebsite)}</span></div>
+              <div className="portal-section-title-row"><strong>{selectedWebsite.name} Settings</strong><span>{getHostingStatus(selectedWebsite)}</span></div>
               <p>{selectedWebsite.description}</p>
               <div className="portal-admin-stats">
                 <article className="portal-help-card"><p className="eyebrow">Owner</p><h3>{getOwnerName(selectedWebsite, portalUsers)}</h3></article>
                 <article className="portal-help-card"><p className="eyebrow">Storage</p><h3>{getStoragePercent(selectedWebsite)}%</h3></article>
-                <article className="portal-help-card"><p className="eyebrow">Views</p><h3>{selectedWebsite.analytics?.monthlyViews ?? 0}</h3></article>
-                <article className="portal-help-card"><p className="eyebrow">Backup</p><h3>{selectedWebsite.backup?.status ?? 'No active backup'}</h3></article>
+                <article className="portal-help-card"><p className="eyebrow">SSL</p><h3>{selectedWebsite.sslStatus ?? 'Pending'}</h3></article>
+                <article className="portal-help-card"><p className="eyebrow">Backup</p><h3>{selectedWebsite.backup?.enabled ? `${selectedWebsite.backup?.retentionHours ?? 48}h` : 'Off'}</h3></article>
               </div>
               <ul>
-                <li><strong>Domain:</strong> {selectedWebsite.domain}</li>
-                <li><strong>Hosting Status:</strong> {getHostingStatus(selectedWebsite)}</li>
-                <li><strong>Portal Access:</strong> {getPortalStatus(selectedWebsite)}</li>
-                <li><strong>Publish Mode:</strong> {selectedWebsite.publishMode}</li>
-                <li><strong>Storage Usage:</strong> {formatStorage(selectedWebsite)}</li>
-                <li><strong>Analytics:</strong> {selectedWebsite.analytics?.monthlyVisitors ?? 0} visitors this month · Last checked: {selectedWebsite.analytics?.lastChecked ?? 'Not connected yet'}</li>
+                <li><strong>Primary Domain:</strong> {selectedWebsite.domain}</li>
+                <li><strong>Additional Domains:</strong> {selectedWebsite.additionalDomains?.length ? selectedWebsite.additionalDomains.join(', ') : 'None'}</li>
+                <li><strong>Website Status:</strong> {getHostingStatus(selectedWebsite)}</li>
+                <li><strong>Portal Status:</strong> {getPortalStatus(selectedWebsite)}</li>
+                <li><strong>Publish Settings:</strong> {selectedWebsite.publishMode}</li>
+                <li><strong>Storage Limit:</strong> {formatStorage(selectedWebsite)}</li>
+                <li><strong>Analytics Settings:</strong> {selectedWebsite.analytics?.enabled ? 'Enabled' : 'Disabled'} · {selectedWebsite.analytics?.monthlyVisitors ?? 0} visitors this month</li>
+                <li><strong>Backup Settings:</strong> {selectedWebsite.backup?.enabled ? `Enabled · ${selectedWebsite.backup?.retentionHours ?? 48} hour retention` : 'Disabled'}</li>
                 <li><strong>48 Hour Backup:</strong> {selectedWebsite.backup?.status ?? 'No active backup'}{selectedWebsite.backup?.expiresAt ? ` · Expires ${selectedWebsite.backup.expiresAt}` : ''}</li>
+                <li><strong>Deployment:</strong> {selectedWebsite.deployment?.provider ?? 'VPS / Nginx'} · {selectedWebsite.deployment?.vpsPath ?? 'Path not set'}</li>
+                <li><strong>Build Command:</strong> {selectedWebsite.deployment?.buildCommand ?? 'Not set'}</li>
+                <li><strong>Last Build:</strong> {selectedWebsite.deployment?.lastBuild ?? 'Not built through portal yet'}</li>
                 <li><strong>Last Publish:</strong> {selectedWebsite.lastPublish ?? 'Not published through portal yet'}</li>
                 <li><strong>Last Editor:</strong> {selectedWebsite.lastEditor ?? 'Unknown'}</li>
                 <li><strong>Assigned Users:</strong> {selectedAssignedUsers.length ? selectedAssignedUsers.map((assignedUser) => assignedUser.name).join(', ') : 'None'}</li>
