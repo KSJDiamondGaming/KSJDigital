@@ -26,7 +26,12 @@ function PortalStylePatch({ children }) {
         .portal-form-grid textarea, .portal-full-field textarea { min-height: 110px; padding: 14px; resize: vertical; }
         .portal-dashboard-main select option { color: #ffffff; background: #06101f; }
         .portal-dashboard-main select:focus, .portal-form-grid input:focus, .portal-form-grid textarea:focus { outline: none; border-color: rgba(139, 178, 255, 0.42); box-shadow: 0 0 0 1px rgba(47, 124, 255, 0.2), 0 16px 34px rgba(47, 124, 255, 0.12); }
-        @media (max-width: 760px) { .portal-form-grid { grid-template-columns: 1fr; } }
+        .portal-management-card > ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0; margin: 18px 0; list-style: none; }
+        .portal-management-card > ul li { padding: 14px 16px; border: 1px solid rgba(139, 178, 255, 0.14); border-radius: 14px; color: var(--silver); background: rgba(255, 255, 255, 0.035); font-weight: 800; }
+        .portal-management-card > .portal-inline-actions { gap: 10px; margin: 18px 0; }
+        .portal-management-card > .portal-inline-actions button, .portal-section-list .portal-inline-actions button, .portal-form-grid + .portal-grid-two + .portal-inline-actions button { min-height: 42px; padding: 0 14px; border: 1px solid rgba(139, 178, 255, 0.18); border-radius: 14px; color: var(--silver); background: rgba(255, 255, 255, 0.05); font-weight: 900; cursor: pointer; }
+        .portal-management-card > .portal-inline-actions button:hover, .portal-section-list .portal-inline-actions button:hover { border-color: rgba(139, 178, 255, 0.36); background: rgba(47, 124, 255, 0.12); color: #fff; }
+        @media (max-width: 760px) { .portal-form-grid, .portal-management-card > ul { grid-template-columns: 1fr; } }
       `}</style>
       {children}
     </>
