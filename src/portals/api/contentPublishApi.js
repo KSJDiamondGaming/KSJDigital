@@ -4,6 +4,33 @@ function getApiBase() {
   return import.meta.env.VITE_PORTAL_API_BASE_URL ?? DEFAULT_API_BASE;
 }
 
+export async function getContentFileState(contentFilePath) {
+  if (!contentFilePath) {
+    return { ok: false, message: 'contentFilePath is required.' };
+  }
+
+  try {
+    const response = await fetch(`${getApiBase()}/api/portal/content/state?path=${encodeURIComponent(contentFilePath)}`);
+    const payload = await response.json();
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: payload?.message ?? 'Unable to read content file state.',
+        details: payload,
+      };
+    }
+
+    return payload;
+  } catch (error) {
+    return {
+      ok: false,
+      message: 'Content state API is not available yet.',
+      details: error.message,
+    };
+  }
+}
+
 export async function publishPreparedContentWrite(preparedWrite) {
   if (!preparedWrite?.contentFilePath || !preparedWrite?.serialisedContent) {
     return {
@@ -24,6 +51,7 @@ export async function publishPreparedContentWrite(preparedWrite) {
     if (!response.ok) {
       return {
         ok: false,
+        code: payload?.code,
         message: payload?.message ?? 'Content publish API failed.',
         details: payload,
       };
