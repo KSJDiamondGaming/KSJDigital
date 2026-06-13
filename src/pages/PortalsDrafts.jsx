@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
-import { getPortalDrafts, getPortalWebsiteById } from '../portals/data/portalManager';
+import {
+  getPortalData,
+  getPortalWebsiteById,
+  submitWebsiteDraftForApproval,
+} from '../portals/data/portalManager';
 
 export default function PortalsDrafts() {
   const session = getStoredSession();
-  const portalDrafts = getPortalDrafts();
+  const [portalData, setPortalData] = useState(getPortalData());
+  const portalDrafts = portalData.drafts ?? [];
   const [selectedDraftId, setSelectedDraftId] = useState(portalDrafts[0]?.id ?? null);
   const [reviewStatus, setReviewStatus] = useState('Ready For Review');
 
@@ -18,6 +23,13 @@ export default function PortalsDrafts() {
   function handleLogout() {
     clearSession();
     window.location.href = '/portals';
+  }
+
+  function submitSelectedDraft() {
+    if (!selectedDraft) return;
+    const savedData = submitWebsiteDraftForApproval(selectedDraft.websiteId, selectedDraft.pageId ?? selectedDraft.section?.toLowerCase(), session?.user?.name ?? 'Client');
+    setPortalData(savedData);
+    setReviewStatus('Submitted For Approval');
   }
 
   return (
@@ -111,7 +123,7 @@ export default function PortalsDrafts() {
                   </div>
 
                   <div className="portal-action-row portal-action-row-primary">
-                    <button type="button" onClick={() => setReviewStatus('Submitted For Approval')}>Submit For Approval</button>
+                    <button type="button" onClick={submitSelectedDraft}>Submit For Approval</button>
                     <button type="button" className="portal-secondary-button" onClick={() => setReviewStatus('Needs Changes')}>Reject Draft</button>
                   </div>
                   <div className="portal-action-row portal-action-row-danger">
