@@ -1,17 +1,15 @@
-import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
+import PortalSidebar from '../components/PortalSidebar';
 import {
   portalProject,
   portalQuickActions,
   portalRecentActivity,
   portalUser,
 } from '../data/portalData';
-import { PORTAL_ROLES } from '../portals/auth/permissions';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 
 export default function PortalsDashboard() {
   const session = getStoredSession();
   const user = session?.user ?? portalUser;
-  const isOwner = user.role === PORTAL_ROLES.OWNER;
 
   function handleLogout() {
     clearSession();
@@ -21,19 +19,7 @@ export default function PortalsDashboard() {
   return (
     <main className="portals-shell portals-dashboard-page">
       <section className="portal-dashboard-frame" aria-label="KSJ Digital Portals dashboard">
-        <aside className="portal-sidebar">
-          <img src={KsjDigitalLogo} alt="KSJ Digital" />
-          <span>Portals</span>
-          <nav>
-            <a href="/portals/dashboard" className="active">Dashboard</a>
-            <a href="/portals/websites/twotonetaj">My Website</a>
-            <a href="/portals/drafts">Drafts</a>
-            <a href="/portals/publish-requests">Publish Requests</a>
-            <a href="/portals/support">Support</a>
-            <a href="/portals/account">Account</a>
-            {isOwner && <a href="/portals/management" className="portal-owner-link">Management Panel</a>}
-          </nav>
-        </aside>
+        <PortalSidebar />
 
         <div className="portal-dashboard-main">
           <header className="portal-dashboard-header">
