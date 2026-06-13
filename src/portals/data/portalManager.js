@@ -32,39 +32,17 @@ function mergePortalDefaults(storedData) {
   const mergedData = {
     ...initialData,
     ...storedData,
-    meta: {
-      ...initialData.meta,
-      ...(storedData.meta ?? {}),
-    },
-    websiteRegistry: {
-      ...initialData.websiteRegistry,
-      ...(storedData.websiteRegistry ?? {}),
-    },
-    contentSchemas: {
-      ...initialData.contentSchemas,
-      ...(storedData.contentSchemas ?? {}),
-    },
-    content: {
-      ...initialData.content,
-      ...(storedData.content ?? {}),
-    },
-    settings: {
-      ...initialData.settings,
-      ...(storedData.settings ?? {}),
-    },
+    meta: { ...initialData.meta, ...(storedData.meta ?? {}) },
+    websiteRegistry: { ...initialData.websiteRegistry, ...(storedData.websiteRegistry ?? {}) },
+    contentSchemas: { ...initialData.contentSchemas, ...(storedData.contentSchemas ?? {}) },
+    content: { ...initialData.content, ...(storedData.content ?? {}) },
+    settings: { ...initialData.settings, ...(storedData.settings ?? {}) },
   };
 
   Object.entries(initialData.content ?? {}).forEach(([websiteId, pages]) => {
-    mergedData.content[websiteId] = {
-      ...pages,
-      ...(storedData.content?.[websiteId] ?? {}),
-    };
-
+    mergedData.content[websiteId] = { ...pages, ...(storedData.content?.[websiteId] ?? {}) };
     Object.entries(pages).forEach(([pageId, contentState]) => {
-      mergedData.content[websiteId][pageId] = {
-        ...contentState,
-        ...(storedData.content?.[websiteId]?.[pageId] ?? {}),
-      };
+      mergedData.content[websiteId][pageId] = { ...contentState, ...(storedData.content?.[websiteId]?.[pageId] ?? {}) };
     });
   });
 
@@ -73,15 +51,12 @@ function mergePortalDefaults(storedData) {
 
 export function getPortalData() {
   if (!canUseLocalStorage()) return cloneData(initialPortalData);
-
   const storedData = window.localStorage.getItem(STORAGE_KEY);
-
   if (!storedData) {
     const initialData = cloneData(initialPortalData);
     savePortalData(initialData);
     return initialData;
   }
-
   try {
     const parsedData = JSON.parse(storedData);
     const mergedData = mergePortalDefaults(parsedData);
@@ -96,32 +71,13 @@ export function getPortalData() {
 }
 
 export function savePortalData(data) {
-  const nextData = {
-    ...data,
-    meta: {
-      ...data.meta,
-      updatedAt: new Date().toISOString(),
-    },
-  };
-
-  if (canUseLocalStorage()) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
-  }
-
+  const nextData = { ...data, meta: { ...data.meta, updatedAt: new Date().toISOString() } };
+  if (canUseLocalStorage()) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextData));
   return nextData;
 }
 
-export function resetPortalData() {
-  const initialData = cloneData(initialPortalData);
-  return savePortalData(initialData);
-}
-
-export function updatePortalData(updater) {
-  const currentData = getPortalData();
-  const nextData = updater(cloneData(currentData));
-  return savePortalData(nextData);
-}
-
+export function resetPortalData() { const initialData = cloneData(initialPortalData); return savePortalData(initialData); }
+export function updatePortalData(updater) { const currentData = getPortalData(); const nextData = updater(cloneData(currentData)); return savePortalData(nextData); }
 export function getPortalUsers() { return getPortalData().users ?? []; }
 export function getPortalWebsites() { return getPortalData().websites ?? []; }
 export function getPortalDrafts() { return getPortalData().drafts ?? []; }
@@ -144,15 +100,14 @@ export function getWebsiteSchemaPages(websiteId) {
   return schema?.pages ?? [];
 }
 
-export function getWebsiteContentPage(websiteId, pageId) {
-  return getPortalData().content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
-}
+export function getWebsiteContentPage(websiteId, pageId) { return getPortalData().content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null }; }
 
-export function saveWebsiteDraftContent(websiteId, pageId, draftContent, actorName = 'Client') {
+export function saveWebsiteDraftContent(websiteId, pageId, draftContent, actorName = 'Client', options = {}) {
   return updatePortalData((data) => {
     const pageTitle = getPageTitle(data, websiteId, pageId);
     const schemaId = getSchemaId(data, websiteId);
     const contentFilePath = getContentFilePath(websiteId, pageId);
+    const baseFileSha = options.baseFileSha ?? options.fileSha ?? null;
     const draftId = `${websiteId}-${pageId}-draft`;
     const currentPage = data.content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
     const nextDraft = {
@@ -161,6 +116,7 @@ export function saveWebsiteDraftContent(websiteId, pageId, draftContent, actorNa
       pageId,
       schemaId,
       contentFilePath,
+      baseFileSha: baseFileSha ?? currentPage.baseFileSha ?? currentPage.lastGitFileSha ?? null,
       section: pageTitle,
       status: 'Draft Ready',
       updatedBy: actorName,
@@ -169,39 +125,23 @@ export function saveWebsiteDraftContent(websiteId, pageId, draftContent, actorNa
       draftVersion: formatContentSnapshot(draftContent),
       submittedAt: 'Not submitted yet',
     };
-
     const existingDrafts = data.drafts ?? [];
-    const nextDrafts = existingDrafts.some((draft) => draft.id === draftId)
-      ? existingDrafts.map((draft) => (draft.id === draftId ? { ...draft, ...nextDraft } : draft))
-      : [nextDraft, ...existingDrafts];
-
+    const nextDrafts = existingDrafts.some((draft) => draft.id === draftId) ? existingDrafts.map((draft) => (draft.id === draftId ? { ...draft, ...nextDraft } : draft)) : [nextDraft, ...existingDrafts];
     return {
       ...data,
-      content: {
-        ...(data.content ?? {}),
-        [websiteId]: {
-          ...(data.content?.[websiteId] ?? {}),
-          [pageId]: {
-            ...currentPage,
-            draft: draftContent,
-            contentFilePath,
-          },
-        },
-      },
+      content: { ...(data.content ?? {}), [websiteId]: { ...(data.content?.[websiteId] ?? {}), [pageId]: { ...currentPage, draft: draftContent, contentFilePath, baseFileSha: nextDraft.baseFileSha } } },
       drafts: nextDrafts,
-      activityLogs: [
-        { id: `activity-${Date.now()}`, type: 'content.draft.saved', label: `${pageTitle} draft saved`, actor: actorName, target: websiteId, timestamp: 'Just now' },
-        ...(data.activityLogs ?? []),
-      ],
+      activityLogs: [{ id: `activity-${Date.now()}`, type: 'content.draft.saved', label: `${pageTitle} draft saved`, actor: actorName, target: websiteId, timestamp: 'Just now' }, ...(data.activityLogs ?? [])],
     };
   });
 }
 
-export function submitWebsiteDraftForApproval(websiteId, pageId, actorName = 'Client') {
+export function submitWebsiteDraftForApproval(websiteId, pageId, actorName = 'Client', options = {}) {
   return updatePortalData((data) => {
     const pageTitle = getPageTitle(data, websiteId, pageId);
     const schemaId = getSchemaId(data, websiteId);
     const contentFilePath = getContentFilePath(websiteId, pageId);
+    const baseFileSha = options.baseFileSha ?? options.fileSha ?? data.content?.[websiteId]?.[pageId]?.baseFileSha ?? data.content?.[websiteId]?.[pageId]?.lastGitFileSha ?? null;
     const draftId = `${websiteId}-${pageId}-draft`;
     const requestId = `request-${websiteId}-${pageId}`;
     const currentPage = data.content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
@@ -211,40 +151,24 @@ export function submitWebsiteDraftForApproval(websiteId, pageId, actorName = 'Cl
       pageId,
       schemaId,
       contentFilePath,
+      baseFileSha,
       draftId,
       title: `${pageTitle} draft review`,
       requestedBy: actorName,
       status: 'Pending Review',
       updatedAt: 'Just now',
       summary: `${pageTitle} content changes are ready for KSJ Digital review.`,
-      history: [
-        { id: `history-${Date.now()}`, status: 'Pending Review', actor: actorName, note: `Draft submitted for approval. Target file: ${contentFilePath}`, timestamp: 'Just now' },
-      ],
+      history: [{ id: `history-${Date.now()}`, status: 'Pending Review', actor: actorName, note: `Draft submitted for approval. Target file: ${contentFilePath}${baseFileSha ? ` · Base SHA: ${baseFileSha}` : ''}`, timestamp: 'Just now' }],
     };
-
-    const nextDrafts = (data.drafts ?? []).map((draft) => (
-      draft.id === draftId
-        ? { ...draft, schemaId, contentFilePath, status: 'Needs Review', submittedAt: 'Just now', updatedBy: actorName, currentVersion: formatContentSnapshot(currentPage.live), draftVersion: formatContentSnapshot(currentPage.draft) }
-        : draft
-    ));
-
+    const nextDrafts = (data.drafts ?? []).map((draft) => (draft.id === draftId ? { ...draft, schemaId, contentFilePath, baseFileSha, status: 'Needs Review', submittedAt: 'Just now', updatedBy: actorName, currentVersion: formatContentSnapshot(currentPage.live), draftVersion: formatContentSnapshot(currentPage.draft) } : draft));
     const existingRequests = data.publishRequests ?? [];
-    const nextRequests = existingRequests.some((request) => request.id === requestId)
-      ? existingRequests.map((request) => (request.id === requestId ? { ...request, ...nextRequest, history: [...(request.history ?? []), ...(nextRequest.history ?? [])] } : request))
-      : [nextRequest, ...existingRequests];
-
+    const nextRequests = existingRequests.some((request) => request.id === requestId) ? existingRequests.map((request) => (request.id === requestId ? { ...request, ...nextRequest, history: [...(request.history ?? []), ...(nextRequest.history ?? [])] } : request)) : [nextRequest, ...existingRequests];
     return {
       ...data,
       drafts: nextDrafts,
       publishRequests: nextRequests,
-      activityLogs: [
-        { id: `activity-${Date.now()}`, type: 'publish.pending', label: `${pageTitle} draft submitted for review`, actor: actorName, target: websiteId, timestamp: 'Just now' },
-        ...(data.activityLogs ?? []),
-      ],
-      notifications: [
-        { id: `notice-${Date.now()}`, type: 'publish', level: 'warning', message: `${pageTitle} draft is waiting for KSJ Digital review. Target file: ${contentFilePath}` },
-        ...(data.notifications ?? []),
-      ],
+      activityLogs: [{ id: `activity-${Date.now()}`, type: 'publish.pending', label: `${pageTitle} draft submitted for review`, actor: actorName, target: websiteId, timestamp: 'Just now' }, ...(data.activityLogs ?? [])],
+      notifications: [{ id: `notice-${Date.now()}`, type: 'publish', level: 'warning', message: `${pageTitle} draft is waiting for KSJ Digital review. Target file: ${contentFilePath}` }, ...(data.notifications ?? [])],
     };
   });
 }
