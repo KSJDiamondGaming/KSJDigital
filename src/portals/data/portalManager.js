@@ -10,6 +10,62 @@ function canUseLocalStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage);
 }
 
+function formatContentSnapshot(content) {
+  const entries = Object.entries(content ?? {}).filter(([, value]) => value !== '' && value !== null && value !== undefined);
+  if (!entries.length) return 'No content entered yet.';
+  return entries.map(([key, value]) => `${key}: ${value}`).join('\n');
+}
+
+function getPageTitle(data, websiteId, pageId) {
+  const registry = data.websiteRegistry?.[websiteId];
+  const schema = data.contentSchemas?.[registry?.schemaId];
+  return schema?.pages?.find((page) => page.id === pageId)?.title ?? pageId;
+}
+
+function mergePortalDefaults(storedData) {
+  const initialData = cloneData(initialPortalData);
+  const mergedData = {
+    ...initialData,
+    ...storedData,
+    meta: {
+      ...initialData.meta,
+      ...(storedData.meta ?? {}),
+    },
+    websiteRegistry: {
+      ...initialData.websiteRegistry,
+      ...(storedData.websiteRegistry ?? {}),
+    },
+    contentSchemas: {
+      ...initialData.contentSchemas,
+      ...(storedData.contentSchemas ?? {}),
+    },
+    content: {
+      ...initialData.content,
+      ...(storedData.content ?? {}),
+    },
+    settings: {
+      ...initialData.settings,
+      ...(storedData.settings ?? {}),
+    },
+  };
+
+  Object.entries(initialData.content ?? {}).forEach(([websiteId, pages]) => {
+    mergedData.content[websiteId] = {
+      ...pages,
+      ...(storedData.content?.[websiteId] ?? {}),
+    };
+
+    Object.entries(pages).forEach(([pageId, contentState]) => {
+      mergedData.content[websiteId][pageId] = {
+        ...contentState,
+        ...(storedData.content?.[websiteId]?.[pageId] ?? {}),
+      };
+    });
+  });
+
+  return mergedData;
+}
+
 export function getPortalData() {
   if (!canUseLocalStorage()) return cloneData(initialPortalData);
 
@@ -22,7 +78,10 @@ export function getPortalData() {
   }
 
   try {
-    return JSON.parse(storedData);
+    const parsedData = JSON.parse(storedData);
+    const mergedData = mergePortalDefaults(parsedData);
+    savePortalData(mergedData);
+    return mergedData;
   } catch (error) {
     console.warn('Unable to parse KSJ Digital portal data. Restoring defaults.', error);
     const initialData = cloneData(initialPortalData);
@@ -115,18 +174,137 @@ export function getWebsiteContent(websiteId) {
   return getPortalData().content?.[websiteId] ?? {};
 }
 
-export function saveWebsiteDraftContent(websiteId, pageId, draftContent) {
-  return updatePortalData((data) => ({
-    ...data,
-    content: {
-      ...(data.content ?? {}),
-      [websiteId]: {
-        ...(data.content?.[websiteId] ?? {}),
-        [pageId]: {
-          ...(data.content?.[websiteId]?.[pageId] ?? {}),
-          draft: draftContent,
+export function getWebsiteSchemaPages(websiteId) {
+  const data = getPortalData();
+  const registry = data.websiteRegistry?.[websiteId];
+  const schema = data.contentSchemas?.[registry?.schemaId];
+  return schema?.pages ?? [];
+}
+
+export function getWebsiteContentPage(websiteId, pageId) {
+  return getPortalData().content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
+}
+
+export function saveWebsiteDraftContent(websiteId, pageId, draftContent, actorName = 'Client') {
+  return updatePortalData((data) => {
+    const pageTitle = getPageTitle(data, websiteId, pageId);
+    const draftId = `${websiteId}-${pageId}-draft`;
+    const currentPage = data.content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
+    const nextDraft = {
+      id: draftId,
+      websiteId,
+      pageId,
+      section: pageTitle,
+      status: 'Draft Ready',
+      updatedBy: actorName,
+      summary: `${pageTitle} draft saved through the website editor.`,
+      currentVersion: formatContentSnapshot(currentPage.live),
+      draftVersion: formatContentSnapshot(draftContent),
+      submittedAt: 'Not submitted yet',
+    };
+
+    const existingDrafts = data.drafts ?? [];
+    const nextDrafts = existingDrafts.some((draft) => draft.id === draftId)
+      ? existingDrafts.map((draft) => (draft.id === draftId ? { ...draft, ...nextDraft } : draft))
+      : [nextDraft, ...existingDrafts];
+
+    return {
+      ...data,
+      content: {
+        ...(data.content ?? {}),
+        [websiteId]: {
+          ...(data.content?.[websiteId] ?? {}),
+          [pageId]: {
+            ...currentPage,
+            draft: draftContent,
+          },
         },
       },
-    },
-  }));
+      drafts: nextDrafts,
+      activityLogs: [
+        {
+          id: `activity-${Date.now()}`,
+          type: 'content.draft.saved',
+          label: `${pageTitle} draft saved`,
+          actor: actorName,
+          target: websiteId,
+          timestamp: 'Just now',
+        },
+        ...(data.activityLogs ?? []),
+      ],
+    };
+  });
+}
+
+export function submitWebsiteDraftForApproval(websiteId, pageId, actorName = 'Client') {
+  return updatePortalData((data) => {
+    const pageTitle = getPageTitle(data, websiteId, pageId);
+    const draftId = `${websiteId}-${pageId}-draft`;
+    const requestId = `request-${websiteId}-${pageId}`;
+    const currentPage = data.content?.[websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null };
+    const nextRequest = {
+      id: requestId,
+      websiteId,
+      pageId,
+      draftId,
+      title: `${pageTitle} draft review`,
+      requestedBy: actorName,
+      status: 'Pending Review',
+      updatedAt: 'Just now',
+      summary: `${pageTitle} content changes are ready for KSJ Digital review.`,
+      history: [
+        {
+          id: `history-${Date.now()}`,
+          status: 'Pending Review',
+          actor: actorName,
+          note: 'Draft submitted for approval',
+          timestamp: 'Just now',
+        },
+      ],
+    };
+
+    const nextDrafts = (data.drafts ?? []).map((draft) => (
+      draft.id === draftId
+        ? {
+            ...draft,
+            status: 'Needs Review',
+            submittedAt: 'Just now',
+            updatedBy: actorName,
+            currentVersion: formatContentSnapshot(currentPage.live),
+            draftVersion: formatContentSnapshot(currentPage.draft),
+          }
+        : draft
+    ));
+
+    const existingRequests = data.publishRequests ?? [];
+    const nextRequests = existingRequests.some((request) => request.id === requestId)
+      ? existingRequests.map((request) => (request.id === requestId ? { ...request, ...nextRequest, history: [...(request.history ?? []), ...(nextRequest.history ?? [])] } : request))
+      : [nextRequest, ...existingRequests];
+
+    return {
+      ...data,
+      drafts: nextDrafts,
+      publishRequests: nextRequests,
+      activityLogs: [
+        {
+          id: `activity-${Date.now()}`,
+          type: 'publish.pending',
+          label: `${pageTitle} draft submitted for review`,
+          actor: actorName,
+          target: websiteId,
+          timestamp: 'Just now',
+        },
+        ...(data.activityLogs ?? []),
+      ],
+      notifications: [
+        {
+          id: `notice-${Date.now()}`,
+          type: 'publish',
+          level: 'warning',
+          message: `${pageTitle} draft is waiting for KSJ Digital review.`,
+        },
+        ...(data.notifications ?? []),
+      ],
+    };
+  });
 }
