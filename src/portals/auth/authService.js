@@ -1,5 +1,5 @@
 import { getPortalData, savePortalData } from '../data/portalManager';
-import { createPortalSession, storeSession, clearSession } from './sessionManager';
+import { createPortalSession, storeSession, clearSession, getStoredSession } from './sessionManager';
 
 const OWNER_TEMP_PASSWORD = 'OwnerChangeMe123!';
 const CLIENT_TEMP_PASSWORD = 'ClientChangeMe123!';
@@ -41,7 +41,7 @@ function getTemporaryPasswordForUser(user) {
   return normaliseRole(user?.role) === 'owner' ? OWNER_TEMP_PASSWORD : CLIENT_TEMP_PASSWORD;
 }
 
-export async function authenticatePortalUser(email, password) {
+export async function authenticatePortalUser(email, password, options = {}) {
   const cleanEmail = normalisePortalEmail(email);
   const cleanPassword = String(password ?? '');
 
@@ -66,7 +66,8 @@ export async function authenticatePortalUser(email, password) {
   }
 
   const providedHash = await hashPortalPassword(cleanPassword);
-  const fallbackHash = user.passwordHash ? null : await hashPortalPassword(getTemporaryPasswordForUser(user));
+  const usingTemporaryPassword = !user.passwordHash;
+  const fallbackHash = usingTemporaryPassword ? await hashPortalPassword(getTemporaryPasswordForUser(user)) : null;
   const expectedHash = user.passwordHash ?? fallbackHash;
 
   if (providedHash !== expectedHash) {
@@ -79,6 +80,7 @@ export async function authenticatePortalUser(email, password) {
           ...portalUser,
           passwordHash: expectedHash,
           passwordUpdatedAt: portalUser.passwordUpdatedAt ?? 'Temporary password activated',
+          mustChangePassword: usingTemporaryPassword || portalUser.mustChangePassword,
           lastLogin: 'Just now',
         }
       : portalUser
@@ -86,14 +88,14 @@ export async function authenticatePortalUser(email, password) {
 
   savePortalData({ ...portalData, users: updatedUsers });
 
-  const session = createPortalSession(sanitizeUserForSession({ ...user, passwordHash: expectedHash, lastLogin: 'Just now' }));
+  const session = createPortalSession(sanitizeUserForSession({ ...user, passwordHash: expectedHash, mustChangePassword: usingTemporaryPassword || user.mustChangePassword, lastLogin: 'Just now' }), { rememberMe: options.rememberMe });
   storeSession(session);
   return { ok: true, session };
 }
 
 export function validatePortalSession() {
   const portalData = getPortalData();
-  const rawSession = JSON.parse(window.localStorage.getItem('ksj_portal_session') ?? 'null');
+  const rawSession = getStoredSession();
   const sessionUser = rawSession?.user;
   if (!sessionUser?.id) return null;
 
@@ -107,6 +109,47 @@ export function validatePortalSession() {
     ...rawSession,
     user: sanitizeUserForSession(currentUser),
   };
+}
+
+export async function changePortalPassword(userId, currentPassword, nextPassword, confirmPassword) {
+  if (!nextPassword || nextPassword.length < 8) {
+    return { ok: false, message: 'New password must be at least 8 characters long.' };
+  }
+
+  if (nextPassword !== confirmPassword) {
+    return { ok: false, message: 'New passwords do not match.' };
+  }
+
+  const portalData = getPortalData();
+  const users = portalData.users ?? [];
+  const user = users.find((portalUser) => portalUser.id === userId);
+
+  if (!user) return { ok: false, message: 'Portal user could not be found.' };
+
+  const currentHash = await hashPortalPassword(currentPassword);
+  const expectedHash = user.passwordHash ?? await hashPortalPassword(getTemporaryPasswordForUser(user));
+
+  if (currentHash !== expectedHash) {
+    return { ok: false, message: 'Current password is incorrect.' };
+  }
+
+  const nextHash = await hashPortalPassword(nextPassword);
+  const nextUsers = users.map((portalUser) => portalUser.id === userId ? {
+    ...portalUser,
+    passwordHash: nextHash,
+    passwordUpdatedAt: 'Just now',
+    mustChangePassword: false,
+  } : portalUser);
+
+  savePortalData({ ...portalData, users: nextUsers });
+
+  const activeSession = getStoredSession();
+  if (activeSession?.user?.id === userId) {
+    const updatedUser = nextUsers.find((portalUser) => portalUser.id === userId);
+    storeSession({ ...activeSession, user: sanitizeUserForSession(updatedUser) });
+  }
+
+  return { ok: true, message: 'Password updated successfully.' };
 }
 
 export const PORTAL_TEMP_CREDENTIALS = {
