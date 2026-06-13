@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
-import { createDemoLoginSession } from '../portals/auth/authService';
+import { authenticatePortalUser, PORTAL_TEMP_CREDENTIALS } from '../portals/auth/authService';
 
 const portalHighlights = [
   'Secure Access',
@@ -9,9 +10,28 @@ const portalHighlights = [
 ];
 
 export default function Portals() {
-  function handleDemoLogin() {
-    createDemoLoginSession();
-    window.location.href = '/portals/dashboard';
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [loginStatus, setLoginStatus] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    setIsLoggingIn(true);
+    setLoginStatus('Checking portal account...');
+
+    const result = await authenticatePortalUser(email, password);
+
+    setIsLoggingIn(false);
+
+    if (!result.ok) {
+      setLoginStatus(result.message);
+      return;
+    }
+
+    const role = result.session?.user?.role;
+    window.location.href = role === 'owner' ? '/portals/admin' : '/portals/dashboard';
   }
 
   return (
@@ -43,22 +63,24 @@ export default function Portals() {
           <img src={KsjDigitalLogo} alt="KSJ Digital" />
           <h2>Welcome Back</h2>
           <p>Login to access your client portal.</p>
-          <form>
+          <form onSubmit={handleLogin}>
             <label>
               Email Address
-              <input type="email" placeholder="Enter your email address" />
+              <input type="email" placeholder="Enter your email address" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
             </label>
             <label>
               Password
-              <input type="password" placeholder="Enter your password" />
+              <input type="password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" />
             </label>
             <div className="portal-login-options">
-              <span>Remember me</span>
+              <label className="portal-remember-option"><input type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} /> Remember me</label>
               <span>Forgot password?</span>
             </div>
-            <button type="button" onClick={handleDemoLogin}>Login</button>
+            <button type="submit" disabled={isLoggingIn}>{isLoggingIn ? 'Checking...' : 'Login'}</button>
           </form>
+          {loginStatus && <p className="portal-inline-notice">{loginStatus}</p>}
           <small>Secure access is available to approved KSJ Digital clients only.</small>
+          <small>Temporary owner password: {PORTAL_TEMP_CREDENTIALS.owner}</small>
         </aside>
       </section>
 
