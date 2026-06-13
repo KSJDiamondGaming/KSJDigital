@@ -1,4 +1,4 @@
-import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
+import PortalSidebar from '../components/PortalSidebar';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
 
 export default function PortalsAdminSettings() {
@@ -12,18 +12,7 @@ export default function PortalsAdminSettings() {
   return (
     <main className="portals-shell portals-dashboard-page">
       <section className="portal-dashboard-frame" aria-label="Portal admin settings">
-        <aside className="portal-sidebar">
-          <img src={KsjDigitalLogo} alt="KSJ Digital" />
-          <span>Admin</span>
-          <nav>
-            <a href="/portals/admin">Admin Home</a>
-            <a href="/portals/admin/users">Users</a>
-            <a href="/portals/admin/websites">Websites</a>
-            <a href="/portals/admin/publish-requests">Publish Requests</a>
-            <a href="/portals/dashboard">Client View</a>
-            <a href="/portals/admin/settings" className="active">Settings</a>
-          </nav>
-        </aside>
+        <PortalSidebar title="Admin" section="admin" />
 
         <div className="portal-dashboard-main">
           <header className="portal-dashboard-header">
