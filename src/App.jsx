@@ -13,7 +13,7 @@ import PortalsPublishRequests from './pages/PortalsPublishRequests';
 import PortalsSupport from './pages/PortalsSupport';
 import PortalsWebsiteEditor from './pages/PortalsWebsiteEditor';
 import Footer from './components/Footer';
-import { PORTAL_ROLES } from './portals/auth/permissions';
+import { getDefaultPortalPath, hasPermission, PORTAL_PERMISSIONS } from './portals/auth/permissions';
 import { validatePortalSession } from './portals/auth/authService';
 
 function PortalStylePatch({ children }) {
@@ -40,6 +40,17 @@ function PortalStylePatch({ children }) {
   );
 }
 
+function redirectTo(path) {
+  window.location.href = path;
+  return null;
+}
+
+function requirePortalPermission(session, permission) {
+  if (!session) return redirectTo('/portals');
+  if (!hasPermission(session.user, permission)) return redirectTo(getDefaultPortalPath(session.user));
+  return true;
+}
+
 export default function App() {
   const path = window.location.pathname;
   const isPortalAdmin = path === '/portals/admin' || path.startsWith('/portals/admin/') || path === '/portals/management';
@@ -52,33 +63,72 @@ export default function App() {
   if (isPortalAdmin) {
     const session = validatePortalSession();
 
-    if (!session || session.user?.role !== PORTAL_ROLES.OWNER) {
-      window.location.href = '/portals';
-      return null;
+    if (path === '/portals/admin' || path === '/portals/admin/users' || path === '/portals/management') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.MANAGE_USERS);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsAdminUsers /></PortalStylePatch>;
     }
 
-    if (path === '/portals/admin') return <PortalStylePatch><PortalsAdmin /></PortalStylePatch>;
-    if (path === '/portals/admin/users' || path === '/portals/management') return <PortalStylePatch><PortalsAdminUsers /></PortalStylePatch>;
-    if (path === '/portals/admin/websites') return <PortalStylePatch><PortalsAdminWebsites /></PortalStylePatch>;
-    if (path === '/portals/admin/backups') return <PortalStylePatch><PortalsAdminBackups /></PortalStylePatch>;
-    if (path === '/portals/admin/settings') return <PortalStylePatch><PortalsAdminSettings /></PortalStylePatch>;
+    if (path === '/portals/admin/websites') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.MANAGE_WEBSITES);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsAdminWebsites /></PortalStylePatch>;
+    }
 
+    if (path === '/portals/admin/backups') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.MANAGE_BACKUPS);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsAdminBackups /></PortalStylePatch>;
+    }
+
+    if (path === '/portals/admin/settings') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.MANAGE_SETTINGS);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsAdminSettings /></PortalStylePatch>;
+    }
+
+    const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.MANAGE_USERS);
+    if (allowed !== true) return allowed;
     return <PortalStylePatch><PortalsAdmin /></PortalStylePatch>;
   }
 
   if (isPortalDashboard || isPortalDrafts || isPortalPublishRequests || isPortalWebsiteEditor || path === '/portals/support' || path === '/portals/account') {
     const session = validatePortalSession();
 
-    if (!session) {
-      window.location.href = '/portals';
-      return null;
+    if (!session) return redirectTo('/portals');
+
+    if (isPortalDrafts) {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_DRAFTS);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsDrafts /></PortalStylePatch>;
     }
 
-    if (isPortalDrafts) return <PortalStylePatch><PortalsDrafts /></PortalStylePatch>;
-    if (isPortalPublishRequests) return <PortalStylePatch><PortalsPublishRequests /></PortalStylePatch>;
-    if (path === '/portals/support') return <PortalStylePatch><PortalsSupport /></PortalStylePatch>;
-    if (path === '/portals/account') return <PortalStylePatch><PortalsAccount /></PortalStylePatch>;
-    if (isPortalWebsiteEditor) return <PortalStylePatch><PortalsWebsiteEditor /></PortalStylePatch>;
+    if (isPortalPublishRequests) {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_PUBLISH_REQUESTS);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsPublishRequests /></PortalStylePatch>;
+    }
+
+    if (path === '/portals/support') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_SUPPORT);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsSupport /></PortalStylePatch>;
+    }
+
+    if (path === '/portals/account') {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_ACCOUNT);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsAccount /></PortalStylePatch>;
+    }
+
+    if (isPortalWebsiteEditor) {
+      const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_WEBSITES);
+      if (allowed !== true) return allowed;
+      return <PortalStylePatch><PortalsWebsiteEditor /></PortalStylePatch>;
+    }
+
+    const allowed = requirePortalPermission(session, PORTAL_PERMISSIONS.VIEW_DASHBOARD);
+    if (allowed !== true) return allowed;
     return <PortalStylePatch><PortalsDashboard /></PortalStylePatch>;
   }
 
