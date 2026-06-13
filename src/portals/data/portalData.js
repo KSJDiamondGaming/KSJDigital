@@ -351,18 +351,7 @@ export const initialPortalData = {
     },
   ],
 
-  backups: [
-    {
-      id: 'backup-twotonetaj-demo',
-      websiteId: 'twotonetaj',
-      status: 'Active',
-      createdAt: 'Demo backup point',
-      expiresAt: '48 hours after publish',
-      createdBy: 'KSJ Digital Admin',
-      reason: 'Safety copy before replacing the live website version.',
-      restoreStatus: 'Available',
-    },
-  ],
+  backups: [],
 
   activityLogs: [
     { id: 'activity-001', type: 'website.updated', label: 'Website settings updated', actor: 'KSJ Digital Admin', target: 'TwoToneTaj', timestamp: 'Just now' },
