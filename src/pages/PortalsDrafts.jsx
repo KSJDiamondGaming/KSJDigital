@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
+import PortalSidebar from '../components/PortalSidebar';
 import { clearSession, getStoredSession } from '../portals/auth/sessionManager';
+import { hasPermission, PORTAL_PERMISSIONS } from '../portals/auth/permissions';
 import {
   getPortalData,
   getPortalWebsiteById,
@@ -9,6 +10,9 @@ import {
 
 export default function PortalsDrafts() {
   const session = getStoredSession();
+  const user = session?.user;
+  const canRequestPublish = hasPermission(user, PORTAL_PERMISSIONS.REQUEST_PUBLISH);
+  const canApprovePublish = hasPermission(user, PORTAL_PERMISSIONS.APPROVE_PUBLISH);
   const [portalData, setPortalData] = useState(getPortalData());
   const portalDrafts = portalData.drafts ?? [];
   const [selectedDraftId, setSelectedDraftId] = useState(portalDrafts[0]?.id ?? null);
@@ -26,7 +30,7 @@ export default function PortalsDrafts() {
   }
 
   function submitSelectedDraft() {
-    if (!selectedDraft) return;
+    if (!selectedDraft || !canRequestPublish) return;
     const savedData = submitWebsiteDraftForApproval(selectedDraft.websiteId, selectedDraft.pageId ?? selectedDraft.section?.toLowerCase(), session?.user?.name ?? 'Client');
     setPortalData(savedData);
     setReviewStatus('Submitted For Approval');
@@ -35,18 +39,7 @@ export default function PortalsDrafts() {
   return (
     <main className="portals-shell portals-dashboard-page">
       <section className="portal-dashboard-frame" aria-label="Portal drafts">
-        <aside className="portal-sidebar">
-          <img src={KsjDigitalLogo} alt="KSJ Digital" />
-          <span>Portals</span>
-          <nav>
-            <a href="/portals/dashboard">Dashboard</a>
-            <a href="/portals/websites/twotonetaj">Editor</a>
-            <a href="/portals/drafts" className="active">Drafts</a>
-            <a href="/portals/publish-requests">Publish Requests</a>
-            <a href="/portals/support">Support</a>
-            <a href="/portals/account">Account</a>
-          </nav>
-        </aside>
+        <PortalSidebar />
 
         <div className="portal-dashboard-main">
           <header className="portal-dashboard-header">
@@ -122,13 +115,24 @@ export default function PortalsDrafts() {
                     </div>
                   </div>
 
-                  <div className="portal-action-row portal-action-row-primary">
-                    <button type="button" onClick={submitSelectedDraft}>Submit For Approval</button>
-                    <button type="button" className="portal-secondary-button" onClick={() => setReviewStatus('Needs Changes')}>Reject Draft</button>
-                  </div>
-                  <div className="portal-action-row portal-action-row-danger">
-                    <button type="button" className="portal-warning-button" onClick={() => setReviewStatus('Ready To Publish')}>Mark Ready To Publish</button>
-                  </div>
+                  {canRequestPublish && (
+                    <div className="portal-action-row portal-action-row-primary">
+                      <button type="button" onClick={submitSelectedDraft}>Submit For Approval</button>
+                    </div>
+                  )}
+
+                  {canApprovePublish && (
+                    <>
+                      <div className="portal-action-row portal-action-row-primary">
+                        <button type="button" className="portal-secondary-button" onClick={() => setReviewStatus('Needs Changes')}>Reject Draft</button>
+                      </div>
+                      <div className="portal-action-row portal-action-row-danger">
+                        <button type="button" className="portal-warning-button" onClick={() => setReviewStatus('Ready To Publish')}>Mark Ready To Publish</button>
+                      </div>
+                    </>
+                  )}
+
+                  {!canRequestPublish && !canApprovePublish && <p className="portal-inline-notice">Read-only access. You can review draft details, but cannot submit or approve changes.</p>}
                   <p className="portal-inline-notice">Publishing this draft will create a 48-hour restore backup before replacing the live version.</p>
                 </>
               )}
