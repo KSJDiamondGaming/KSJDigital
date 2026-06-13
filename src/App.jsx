@@ -57,7 +57,7 @@ export default function App() {
   const isPortalDashboard = path === '/portals/dashboard';
   const isPortalDrafts = path === '/portals/drafts';
   const isPortalPublishRequests = path === '/portals/publish-requests';
-  const isPortalWebsiteEditor = path === '/portals/websites/twotonetaj';
+  const isPortalWebsiteEditor = path.startsWith('/portals/websites/');
   const isPortalsRoute = path === '/portals' || path.startsWith('/portals/');
 
   if (isPortalAdmin) {
