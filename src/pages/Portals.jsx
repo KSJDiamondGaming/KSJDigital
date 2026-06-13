@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
-import { authenticatePortalUser, PORTAL_TEMP_CREDENTIALS } from '../portals/auth/authService';
+import { authenticatePortalUser } from '../portals/auth/authService';
 
 const portalHighlights = [
   'Secure Access',
@@ -80,7 +80,6 @@ export default function Portals() {
           </form>
           {loginStatus && <p className="portal-inline-notice">{loginStatus}</p>}
           <small>Secure access is available to approved KSJ Digital clients only.</small>
-          <small>Temporary owner password: {PORTAL_TEMP_CREDENTIALS.owner}</small>
         </aside>
       </section>
 
