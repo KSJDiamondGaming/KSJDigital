@@ -23,7 +23,7 @@ function getDraftForRequest(request, drafts) {
 
 function createActivity(type, label, actor, target) {
   return {
-    id: `activity-${Date.now()}`,
+    id: `activity-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     type,
     label,
     actor,
@@ -32,16 +32,24 @@ function createActivity(type, label, actor, target) {
   };
 }
 
+function formatSnapshot(content) {
+  const entries = Object.entries(content ?? {}).filter(([, value]) => value !== '' && value !== null && value !== undefined);
+  if (!entries.length) return 'No snapshot content available.';
+  return entries.map(([key, value]) => `${key}: ${value}`).join('\n');
+}
+
 export default function PortalsPublishRequests() {
   const session = getStoredSession();
   const initialPortalData = getPortalData();
   const [portalData, setPortalData] = useState(initialPortalData);
   const [activeStatus, setActiveStatus] = useState('Pending');
   const [selectedRequestId, setSelectedRequestId] = useState(initialPortalData.publishRequests?.[0]?.id ?? null);
+  const [selectedBackupId, setSelectedBackupId] = useState(initialPortalData.backups?.[0]?.id ?? null);
   const [reviewNote, setReviewNote] = useState('');
 
   const portalPublishRequests = portalData.publishRequests ?? [];
   const portalDrafts = portalData.drafts ?? [];
+  const portalBackups = portalData.backups ?? [];
   const filteredRequests = portalPublishRequests.filter((request) => normaliseStatus(request.status) === activeStatus);
 
   const selectedRequest = useMemo(
@@ -50,6 +58,11 @@ export default function PortalsPublishRequests() {
   );
   const selectedWebsite = selectedRequest ? getPortalWebsiteById(selectedRequest.websiteId) : null;
   const selectedDraft = getDraftForRequest(selectedRequest, portalDrafts);
+  const selectedBackup = useMemo(
+    () => portalBackups.find((backup) => backup.id === selectedBackupId) ?? portalBackups[0],
+    [portalBackups, selectedBackupId],
+  );
+  const selectedBackupWebsite = selectedBackup ? getPortalWebsiteById(selectedBackup.websiteId) : null;
 
   function commitPortalData(nextData) {
     const savedData = savePortalData(nextData);
@@ -102,7 +115,7 @@ export default function PortalsPublishRequests() {
     const pageId = selectedRequest.pageId ?? selectedDraft?.pageId;
     const currentPageContent = pageId ? portalData.content?.[selectedRequest.websiteId]?.[pageId] ?? { live: {}, draft: {}, backup: null } : null;
     const nextLiveContent = currentPageContent?.draft ?? {};
-    const backupId = `backup-${selectedRequest.websiteId}-${Date.now()}`;
+    const backupId = `backup-${selectedRequest.websiteId}-${pageId}-${Date.now()}`;
     const nextBackup = {
       id: backupId,
       websiteId: selectedRequest.websiteId,
@@ -116,7 +129,7 @@ export default function PortalsPublishRequests() {
       contentSnapshot: currentPageContent?.live ?? {},
     };
 
-    const nextActivity = createActivity('publish.published', 'Publish request completed and backup created', actor, selectedRequest.title);
+    const nextActivity = createActivity('publish.published', 'Publish completed and 48-hour backup created', actor, selectedRequest.title);
 
     commitPortalData({
       ...portalData,
@@ -129,9 +142,11 @@ export default function PortalsPublishRequests() {
             live: nextLiveContent,
             draft: {},
             backup: {
+              id: backupId,
               contentSnapshot: currentPageContent?.live ?? {},
               createdAt: 'Just now',
               expiresAt: '48 hours from publish',
+              restoreStatus: 'Available',
             },
           },
         },
@@ -166,7 +181,10 @@ export default function PortalsPublishRequests() {
           expiresAt: '48 hours from publish',
         },
       } : website),
-      backups: [nextBackup, ...(portalData.backups ?? []).filter((backup) => backup.websiteId !== selectedRequest.websiteId)],
+      backups: [
+        nextBackup,
+        ...(portalData.backups ?? []).filter((backup) => !(backup.websiteId === selectedRequest.websiteId && backup.pageId === pageId)),
+      ],
       activityLogs: [nextActivity, ...(portalData.activityLogs ?? [])],
       notifications: [
         {
@@ -178,8 +196,67 @@ export default function PortalsPublishRequests() {
         ...(portalData.notifications ?? []),
       ],
     });
+    setSelectedBackupId(backupId);
     setActiveStatus('Published');
     setReviewNote('');
+  }
+
+  function restoreBackup() {
+    if (!selectedBackup?.websiteId || !selectedBackup?.pageId) return;
+
+    const actor = session?.user?.name ?? 'KSJ Digital Admin';
+    const websiteContent = portalData.content?.[selectedBackup.websiteId] ?? {};
+    const currentPage = websiteContent[selectedBackup.pageId] ?? { live: {}, draft: {}, backup: null };
+    const restoredContent = selectedBackup.contentSnapshot ?? {};
+    const nextActivity = createActivity('backup.restored', '48-hour restore backup used', actor, `${selectedBackup.websiteId}/${selectedBackup.pageId}`);
+
+    commitPortalData({
+      ...portalData,
+      content: {
+        ...(portalData.content ?? {}),
+        [selectedBackup.websiteId]: {
+          ...websiteContent,
+          [selectedBackup.pageId]: {
+            ...currentPage,
+            live: restoredContent,
+            draft: {},
+            backup: {
+              ...(currentPage.backup ?? {}),
+              restoreStatus: 'Restored',
+              restoredAt: 'Just now',
+              restoredBy: actor,
+            },
+          },
+        },
+      },
+      backups: (portalData.backups ?? []).map((backup) => backup.id === selectedBackup.id ? {
+        ...backup,
+        status: 'Restored',
+        restoreStatus: 'Restored',
+        restoredAt: 'Just now',
+        restoredBy: actor,
+      } : backup),
+      websites: (portalData.websites ?? []).map((website) => website.id === selectedBackup.websiteId ? {
+        ...website,
+        lastEditor: actor,
+        lastPublish: 'Restored from backup just now',
+        backup: {
+          ...(website.backup ?? {}),
+          status: 'Backup restored',
+          lastRestoredAt: 'Just now',
+        },
+      } : website),
+      activityLogs: [nextActivity, ...(portalData.activityLogs ?? [])],
+      notifications: [
+        {
+          id: `notice-${Date.now()}`,
+          type: 'backup',
+          level: 'success',
+          message: `${selectedBackupWebsite?.name ?? selectedBackup.websiteId} was restored from a 48-hour backup.`,
+        },
+        ...(portalData.notifications ?? []),
+      ],
+    });
   }
 
   return (
@@ -222,7 +299,7 @@ export default function PortalsPublishRequests() {
               <div>
                 <p className="eyebrow">48 Hour Backup Protection</p>
                 <h2>Safe Publishing Workflow</h2>
-                <p>Publishing creates a temporary restore backup before the live website is replaced. Clients should be warned that restore backups expire after 48 hours.</p>
+                <p>Publishing creates one temporary restore backup per page before the live website content is replaced.</p>
               </div>
             </div>
           </section>
@@ -311,11 +388,74 @@ export default function PortalsPublishRequests() {
                 <button type="button" className="portal-secondary-button" onClick={() => updateRequestStatus('Rejected')}>Reject</button>
               </div>
               <div className="portal-action-row portal-action-row-danger">
-                <button type="button" className="portal-warning-button" onClick={publishRequest}>Publish</button>
+                <button type="button" className="portal-warning-button" onClick={publishRequest}>Publish + Create 48h Backup</button>
               </div>
-              <p className="portal-inline-notice">Publishing will create a 48-hour restore backup before the live copy is replaced.</p>
+              <p className="portal-inline-notice">Publishing stays inside the portal simulation layer. It does not touch GitHub, VPS, or live website files yet.</p>
             </section>
           </div>
+
+          <section className="portal-editor-panel">
+            <div className="portal-editor-header">
+              <div>
+                <p className="eyebrow">Restore Safety</p>
+                <h2>48 Hour Backups</h2>
+                <p>Only one temporary restore backup is kept per website page in this simulation. Restoring replaces the portal live content with the saved backup snapshot.</p>
+              </div>
+            </div>
+
+            <div className="portal-grid-two">
+              <div className="portal-section-list">
+                {portalBackups.length ? portalBackups.map((backup) => {
+                  const website = getPortalWebsiteById(backup.websiteId);
+                  return (
+                    <article key={backup.id}>
+                      <div>
+                        <div className="portal-section-title-row"><strong>{website?.name ?? backup.websiteId}</strong><span>{backup.restoreStatus ?? backup.status}</span></div>
+                        <p>{backup.reason}</p>
+                        <ul>
+                          <li>Page: {backup.pageId ?? 'Website'}</li>
+                          <li>Created: {backup.createdAt}</li>
+                          <li>Expires: {backup.expiresAt}</li>
+                        </ul>
+                      </div>
+                      <button type="button" onClick={() => setSelectedBackupId(backup.id)}>Inspect</button>
+                    </article>
+                  );
+                }) : (
+                  <article>
+                    <div>
+                      <div className="portal-section-title-row"><strong>No active backups</strong><span>Waiting</span></div>
+                      <p>Publish an approved request to create the first 48-hour backup.</p>
+                    </div>
+                  </article>
+                )}
+              </div>
+
+              <section className="portal-help-card portal-selection-guide">
+                <p className="eyebrow">Selected Backup</p>
+                <h3>{selectedBackupWebsite?.name ?? 'No backup selected'}</h3>
+                {selectedBackup ? (
+                  <>
+                    <div className="portal-detail-group">
+                      <strong>Backup Details</strong>
+                      <small>Website: {selectedBackupWebsite?.name ?? selectedBackup.websiteId}</small>
+                      <small>Page: {selectedBackup.pageId ?? 'Website'}</small>
+                      <small>Status: {selectedBackup.restoreStatus ?? selectedBackup.status}</small>
+                      <small>Created: {selectedBackup.createdAt}</small>
+                      <small>Expires: {selectedBackup.expiresAt}</small>
+                    </div>
+                    <div className="portal-management-card compact">
+                      <div className="portal-section-title-row"><strong>Backup Snapshot</strong><span>Previous Live</span></div>
+                      <p>{formatSnapshot(selectedBackup.contentSnapshot)}</p>
+                    </div>
+                    <div className="portal-action-row portal-action-row-danger">
+                      <button type="button" className="portal-warning-button" onClick={restoreBackup}>Restore This Backup</button>
+                    </div>
+                  </>
+                ) : <p>Select a backup to inspect it.</p>}
+              </section>
+            </div>
+          </section>
         </div>
       </section>
     </main>
