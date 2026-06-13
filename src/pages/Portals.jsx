@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import KsjDigitalLogo from '../assets/logos/KsjDigitalLogo.png';
 import { authenticatePortalUser } from '../portals/auth/authService';
+import { getDefaultPortalPath } from '../portals/auth/permissions';
 
 const portalHighlights = [
   'Secure Access',
@@ -30,8 +31,7 @@ export default function Portals() {
       return;
     }
 
-    const role = result.session?.user?.role;
-    window.location.href = role === 'owner' ? '/portals/admin' : '/portals/dashboard';
+    window.location.href = getDefaultPortalPath(result.session?.user);
   }
 
   return (
