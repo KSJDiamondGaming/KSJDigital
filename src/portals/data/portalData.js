@@ -1,8 +1,201 @@
 export const initialPortalData = {
   meta: {
-    version: 1,
+    version: 2,
     name: 'KSJ Digital Portals',
     storageMode: 'frontend-json-demo',
+  },
+
+  websiteRegistry: {
+    ksjdigital: {
+      websiteId: 'ksjdigital',
+      name: 'KSJ Digital',
+      schemaId: 'business',
+      lockedCode: true,
+      cmsEnabled: true,
+      editablePages: ['homepage', 'about', 'contact'],
+      note: 'Internal KSJ Digital website used as the first CMS test site before client websites are connected.',
+    },
+    twotonetaj: {
+      websiteId: 'twotonetaj',
+      name: 'TwoToneTaj',
+      schemaId: 'creator',
+      lockedCode: true,
+      cmsEnabled: true,
+      editablePages: ['homepage', 'about', 'community', 'merch', 'contact'],
+      note: 'Creator website registry entry. Do not connect live TwoToneTaj deployment until the KSJ Digital CMS flow is proven.',
+    },
+  },
+
+  contentSchemas: {
+    business: {
+      label: 'Business Website',
+      pages: [
+        {
+          id: 'homepage',
+          title: 'Homepage',
+          description: 'Main landing page content controlled through approved CMS fields.',
+          fields: [
+            { id: 'heroTitle', label: 'Hero Title', type: 'text' },
+            { id: 'heroSubtitle', label: 'Hero Subtitle', type: 'textarea' },
+            { id: 'primaryButtonText', label: 'Primary Button Text', type: 'text' },
+            { id: 'primaryButtonUrl', label: 'Primary Button URL', type: 'text' },
+          ],
+        },
+        {
+          id: 'about',
+          title: 'About',
+          description: 'Short company overview and positioning copy.',
+          fields: [
+            { id: 'headline', label: 'Headline', type: 'text' },
+            { id: 'bodyCopy', label: 'Body Copy', type: 'textarea' },
+          ],
+        },
+        {
+          id: 'contact',
+          title: 'Contact',
+          description: 'Public contact details and primary enquiry route.',
+          fields: [
+            { id: 'email', label: 'Public Email', type: 'text' },
+            { id: 'supportEmail', label: 'Support Email', type: 'text' },
+          ],
+        },
+      ],
+    },
+    creator: {
+      label: 'Creator Website',
+      pages: [
+        {
+          id: 'homepage',
+          title: 'Homepage',
+          description: 'Creator landing page and hero content.',
+          fields: [
+            { id: 'heroTitle', label: 'Hero Title', type: 'text' },
+            { id: 'heroSubtitle', label: 'Hero Subtitle', type: 'text' },
+            { id: 'heroSummary', label: 'Hero Summary', type: 'textarea' },
+            { id: 'buttonText', label: 'Button Text', type: 'text' },
+            { id: 'buttonUrl', label: 'Button URL', type: 'text' },
+          ],
+        },
+        {
+          id: 'about',
+          title: 'About',
+          description: 'Creator story and community positioning.',
+          fields: [
+            { id: 'headline', label: 'Headline', type: 'text' },
+            { id: 'storyCopy', label: 'Story Copy', type: 'textarea' },
+            { id: 'quote', label: 'Quote', type: 'text' },
+          ],
+        },
+        {
+          id: 'community',
+          title: 'Community',
+          description: 'Community page copy and call-to-action details.',
+          fields: [
+            { id: 'headline', label: 'Headline', type: 'text' },
+            { id: 'bodyCopy', label: 'Body Copy', type: 'textarea' },
+            { id: 'discordUrl', label: 'Discord URL', type: 'text' },
+          ],
+        },
+        {
+          id: 'merch',
+          title: 'Merch',
+          description: 'Merch page copy and coming-soon messaging.',
+          fields: [
+            { id: 'merchIntro', label: 'Merch Intro', type: 'textarea' },
+            { id: 'comingSoonMessage', label: 'Coming Soon Message', type: 'text' },
+          ],
+        },
+        {
+          id: 'contact',
+          title: 'Contact',
+          description: 'Public creator contact and social links.',
+          fields: [
+            { id: 'publicEmail', label: 'Public Email', type: 'text' },
+            { id: 'discordUrl', label: 'Discord URL', type: 'text' },
+            { id: 'linktreeUrl', label: 'Linktree URL', type: 'text' },
+          ],
+        },
+      ],
+    },
+  },
+
+  content: {
+    ksjdigital: {
+      homepage: {
+        live: {
+          heroTitle: 'KSJ Digital',
+          heroSubtitle: 'Professional website management, portals, and digital systems.',
+          primaryButtonText: 'Contact KSJ Digital',
+          primaryButtonUrl: '/contact',
+        },
+        draft: {},
+        backup: null,
+      },
+      about: {
+        live: {
+          headline: 'Websites managed with control, approval, and safety.',
+          bodyCopy: 'KSJ Digital builds managed website systems where clients can request updates without editing code.',
+        },
+        draft: {},
+        backup: null,
+      },
+      contact: {
+        live: {
+          email: 'ksj@ksjdigital.co.uk',
+          supportEmail: 'support@ksjdigital.co.uk',
+        },
+        draft: {},
+        backup: null,
+      },
+    },
+    twotonetaj: {
+      homepage: {
+        live: {
+          heroTitle: 'TwoToneTaj',
+          heroSubtitle: 'Average Gamer • Est. 1989',
+          heroSummary: 'Gaming, laughs, community moments, and TajSquad updates.',
+          buttonText: 'Join TajSquad',
+          buttonUrl: '#community',
+        },
+        draft: {},
+        backup: null,
+      },
+      about: {
+        live: {
+          headline: 'Average gamer. Community builder. Professional scoreboard victim.',
+          storyCopy: 'Gaming was never about the scoreboard. It was always about the people.',
+          quote: 'It’s all about the 💩 and giggles, folks.',
+        },
+        draft: {},
+        backup: null,
+      },
+      community: {
+        live: {
+          headline: 'Welcome to TajSquad',
+          bodyCopy: 'A community built around good people, good laughs, and good times.',
+          discordUrl: '',
+        },
+        draft: {},
+        backup: null,
+      },
+      merch: {
+        live: {
+          merchIntro: 'TwoToneTaj merch is being prepared and will launch when the store is ready.',
+          comingSoonMessage: 'Merch coming soon.',
+        },
+        draft: {},
+        backup: null,
+      },
+      contact: {
+        live: {
+          publicEmail: 'media@ksjdigital.co.uk',
+          discordUrl: '',
+          linktreeUrl: '',
+        },
+        draft: {},
+        backup: null,
+      },
+    },
   },
 
   users: [
@@ -83,6 +276,7 @@ export const initialPortalData = {
     {
       id: 'twotonetaj-homepage-draft',
       websiteId: 'twotonetaj',
+      pageId: 'homepage',
       section: 'Homepage',
       status: 'Draft Ready',
       updatedBy: 'TwoToneTaj',
@@ -94,6 +288,7 @@ export const initialPortalData = {
     {
       id: 'twotonetaj-about-draft',
       websiteId: 'twotonetaj',
+      pageId: 'about',
       section: 'About',
       status: 'Needs Review',
       updatedBy: 'TwoToneTaj',
@@ -108,6 +303,8 @@ export const initialPortalData = {
     {
       id: 'request-homepage-draft',
       websiteId: 'twotonetaj',
+      draftId: 'twotonetaj-homepage-draft',
+      pageId: 'homepage',
       title: 'Homepage draft review',
       requestedBy: 'TwoToneTaj',
       status: 'Draft',
